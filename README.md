@@ -1,4 +1,4 @@
-# Activity Booking Platform
+# Andros 
 
 A full-stack Next.js application for booking activities and experiences. Companies can list their activities, and users can browse and book available time slots.
 
