@@ -35,7 +35,7 @@ A full-stack Next.js application for booking activities and experiences. Compani
 1. **Clone the repository**
    \`\`\`bash
    git clone <your-repo-url>
-   cd activity-booking-platform
+   cd VIP-Andros
    \`\`\`
 
 2. **Install dependencies**
