@@ -64,16 +64,8 @@ A full-stack Next.js application for booking activities and experiences. Compani
    NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000
    \`\`\`
 
-4. **Set up the database**
-   
-   The SQL scripts in the `scripts/` folder need to be run in order:
-   - `001_initial_schema.sql` - Creates tables and RLS policies
-   - `002_seed_data.sql` - (Optional) Adds sample data
-   - `003_fix_company_name_visibility.sql` - Fixes company name visibility for anonymous users
-   
-   You can run these scripts in the Supabase SQL Editor or using the Supabase CLI.
 
-5. **Run the development server**
+4. **Run the development server**
    \`\`\`bash
    npm run dev
    # or
