@@ -32,8 +32,8 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-ocean-blue to-ocean-dark text-white py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl mb-4 text-balance font-display">Discover Amazing Activities</h1>
-          <p className="text-xl mb-8 text-balance max-w-2xl mx-auto">
+          <h1 className="text-5xl font-medium mb-4 text-balance font-display">Discover Amazing Activities</h1>
+          <p className="text-xl mb-8 text-balance max-w-2xl mx-auto font-normal">
             Book unforgettable experiences from trusted providers around the world
           </p>
 

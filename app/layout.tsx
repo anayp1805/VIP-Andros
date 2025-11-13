@@ -5,6 +5,14 @@ import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
 import { ActivitiesProvider } from "@/lib/activities-context"
 
+import { Poppins } from "next/font/google"
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-poppins",
+})
+
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 const playfair = Playfair_Display({
   weight: ["400", "600", "700", "900"],
@@ -30,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${playfair.variable} ${nunito.variable}`}>
+      <body className={`${inter.variable} ${playfair.variable} ${nunito.variable} ${poppins.variable}`}>
         <AuthProvider>
           <ActivitiesProvider>{children}</ActivitiesProvider>
         </AuthProvider>
@@ -38,3 +46,5 @@ export default function RootLayout({
     </html>
   )
 }
+
+
