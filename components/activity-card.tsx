@@ -36,9 +36,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-xl font-semibold text-slate line-clamp-1">{activity.title}</h3>
-            {activity.tagline && <p className="text-sm text-slate-light mt-1">{activity.tagline}</p>}
-            {/* </CHANGE> */}
+            <h3 className="text-xl font-semibold text-slate line-clamp-1 font-display">{activity.title}</h3>
             <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
               <MapPin className="h-3 w-3" />
               {activity.companyName}
@@ -48,7 +46,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
       </CardHeader>
 
       <CardContent>
-        <p className="text-sm text-slate-light line-clamp-2 mb-4">{displayDescription}</p>
+        <p className="text-sm text-slate-light line-clamp-4 mb-4">{displayDescription}</p>
         {/* </CHANGE> */}
 
         {included.length > 0 && (
@@ -77,7 +75,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
       </CardContent>
 
       <CardFooter>
-        <Button asChild className="w-full bg-ocean-blue hover:bg-ocean-dark text-white">
+  <Button asChild className="w-full bg-ocean-blue hover:bg-ocean-dark text-white font-button">
           <Link href={`/activity/${activity.id}`}>View Details & Book</Link>
         </Button>
       </CardFooter>

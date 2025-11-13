@@ -6,6 +6,7 @@ import { useActivities } from "@/lib/activities-context"
 import { Navbar } from "@/components/navbar"
 import { AuthModal } from "@/components/auth-modal"
 import { ActivityCard } from "@/components/activity-card"
+import ActivitiesFilteredList from "@/app/components/activities-filtered-list"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 
@@ -31,7 +32,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-ocean-blue to-ocean-dark text-white py-20">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-4 text-balance">Discover Amazing Activities</h1>
+          <h1 className="text-5xl mb-4 text-balance font-display">Discover Amazing Activities</h1>
           <p className="text-xl mb-8 text-balance max-w-2xl mx-auto">
             Book unforgettable experiences from trusted providers around the world
           </p>
@@ -53,21 +54,10 @@ export default function HomePage() {
       {/* Activities Grid */}
       <section className="container mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl font-bold text-slate">Available Activities</h2>
-          <p className="text-muted-foreground">{filteredActivities.length} activities found</p>
+          <div />
         </div>
 
-        {filteredActivities.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-lg text-muted-foreground">No activities found. Try a different search term.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredActivities.map((activity) => (
-              <ActivityCard key={activity.id} activity={activity} />
-            ))}
-          </div>
-        )}
+  <ActivitiesFilteredList />
       </section>
 
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}

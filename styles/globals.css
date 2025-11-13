@@ -76,6 +76,8 @@
 
 @theme inline {
   --font-sans: 'Geist', 'Geist Fallback';
+  --font-display: 'Playfair Display', serif;
+  --font-button: 'Nunito', sans-serif;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -121,5 +123,14 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-button {
+    font-family: var(--font-button);
   }
 }
