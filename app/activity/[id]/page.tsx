@@ -178,10 +178,13 @@ export default function ActivityDetailPage() {
               {activity.tagline && <p className="text-xl text-slate-light mb-3">{activity.tagline}</p>}
               {/* </CHANGE> */}
               <div className="flex items-center gap-4 text-lg text-muted-foreground">
-                <span className="flex items-center gap-2">
+                <Link 
+                  href={`/business/${activity.companyId}`}
+                  className="flex items-center gap-2 hover:text-ocean-blue transition-colors"
+                >
                   <MapPin className="h-5 w-5" />
                   Hosted by {activity.companyName}
-                </span>
+                </Link>
                 <span className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
                   {activityDuration}

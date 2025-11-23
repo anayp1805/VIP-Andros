@@ -39,10 +39,13 @@ export function ActivityCard({ activity }: ActivityCardProps) {
             <h3 className="text-xl font-semibold text-slate line-clamp-1">{activity.title}</h3>
             {activity.tagline && <p className="text-sm text-slate-light mt-1">{activity.tagline}</p>}
             {/* </CHANGE> */}
-            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+            <Link 
+              href={`/business/${activity.companyId}`}
+              className="text-sm text-muted-foreground flex items-center gap-1 mt-1 hover:text-ocean-blue transition-colors"
+            >
               <MapPin className="h-3 w-3" />
               {activity.companyName}
-            </p>
+            </Link>
           </div>
         </div>
       </CardHeader>

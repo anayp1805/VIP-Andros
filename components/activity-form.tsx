@@ -42,6 +42,7 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
   )
   const [ourStory, setOurStory] = useState(activity?.ourStory || "")
   const [ourStoryImage, setOurStoryImage] = useState(activity?.ourStoryImage || "")
+  const [activityType, setActivityType] = useState<'general' | 'lodge-experience'>(activity?.activityType || 'general')
 
   const addIncluded = () => {
     if (newIncluded.trim()) {
@@ -158,6 +159,7 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
       availability: availability.filter((av) => av.date && av.slots.some((s) => s.time)),
       ourStory,
       ourStoryImage,
+      activityType,
     }
 
     onSubmit(activityData)
@@ -165,6 +167,28 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-6xl mx-auto">
+      {/* Activity Type - First Question */}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="activity-type">Activity Type *</Label>
+            <select
+              id="activity-type"
+              value={activityType}
+              onChange={(e) => setActivityType(e.target.value as 'general' | 'lodge-experience')}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              required
+            >
+              <option value="general">General Activity (Tours, Excursions, etc.)</option>
+              <option value="lodge-experience">Lodge Experience (Spa, Private Dinner, etc.)</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              General activities appear on the main page. Lodge experiences only show on your lodge page.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid md:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
@@ -172,12 +196,14 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Package Title *</Label>
+                <Label htmlFor="title">
+                  {activityType === 'lodge-experience' ? 'Experience Name *' : 'Package Title *'}
+                </Label>
                 <Input
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Title"
+                  placeholder={activityType === 'lodge-experience' ? 'e.g. Romantic Dinner Package' : 'e.g. Blue Hole Adventure'}
                   required
                 />
                 <p className="text-xs text-muted-foreground">Short and Sweet.</p>
@@ -273,20 +299,30 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="experience">What you'll do *</Label>
+                <Label htmlFor="experience">
+                  {activityType === 'lodge-experience' ? 'Experience Description *' : 'What you\'ll do *'}
+                </Label>
                 <Textarea
                   id="experience"
                   value={experienceDescription}
                   onChange={(e) => setExperienceDescription(e.target.value)}
-                  placeholder="Describe the experience in detail..."
+                  placeholder={activityType === 'lodge-experience' 
+                    ? 'Describe what guests will receive with this experience...'
+                    : 'Describe the experience in detail...'}
                   rows={4}
                   required
                 />
-                <p className="text-xs text-muted-foreground">Describe the experience.</p>
+                <p className="text-xs text-muted-foreground">
+                  {activityType === 'lodge-experience' 
+                    ? 'Describe what\'s included in this experience package.'
+                    : 'Describe the experience.'}
+                </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="duration">How long will it be *</Label>
+                <Label htmlFor="duration">
+                  {activityType === 'lodge-experience' ? 'Duration (if applicable)' : 'How long will it be *'}
+                </Label>
                 <div className="flex gap-2 items-center">
                   <Input
                     id="duration"
@@ -296,13 +332,16 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
                     placeholder="0.5, 1, 2, 5 hrs"
-                    required
+                    required={activityType === 'general'}
                     className="flex-1"
                   />
                   <span className="text-sm text-muted-foreground whitespace-nowrap">Total time</span>
                 </div>
-                <p className="text-xs text-muted-foreground">e.g. 45 minutes for ..., and 1 hr for ...</p>
-                <p className="text-xs text-muted-foreground font-medium">Must enter in hours</p>
+                <p className="text-xs text-muted-foreground">
+                  {activityType === 'lodge-experience'
+                    ? 'Leave blank if not time-based (e.g., room upgrade, amenity package)'
+                    : 'e.g. 45 minutes for ..., and 1 hr for ... Must enter in hours'}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -311,12 +350,16 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
-                <Label>What is included</Label>
+                <Label>
+                  {activityType === 'lodge-experience' ? 'What\'s Included in This Experience' : 'What is included'}
+                </Label>
                 <div className="flex gap-2">
                   <Input
                     value={newIncluded}
                     onChange={(e) => setNewIncluded(e.target.value)}
-                    placeholder="e.g. drinks, food, etc..."
+                    placeholder={activityType === 'lodge-experience' 
+                      ? 'e.g. champagne, rose petals, massage...'
+                      : 'e.g. drinks, food, etc...'}
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault()
@@ -349,7 +392,8 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
             </CardContent>
           </Card>
 
-          {/* What to bring */}
+          {/* What to bring - Only for general activities */}
+          {activityType === 'general' && (
           <Card>
             <CardContent className="pt-6 space-y-4">
               <div className="space-y-2">
@@ -390,6 +434,7 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
 
@@ -483,7 +528,8 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
         </CardContent>
       </Card>
 
-      {/* Availability - Full Width */}
+      {/* Availability - Full Width - Only for general activities */}
+      {activityType === 'general' && (
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -549,6 +595,7 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
           ))}
         </CardContent>
       </Card>
+      )}
 
       {/* Our Story - Full Width */}
       <Card>

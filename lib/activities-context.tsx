@@ -25,6 +25,7 @@ export interface Activity {
   }[]
   ourStory?: string
   ourStoryImage?: string
+  activityType: 'general' | 'lodge-experience'
 }
 
 export interface Booking {
@@ -136,6 +137,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
             availability: [], // Will be populated from availability_slots
             ourStory: activity.our_story || "",
             ourStoryImage: activity.our_story_image || "",
+            activityType: activity.activity_type || 'general',
           }
         })
 
@@ -261,6 +263,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         is_available: activity.isAvailable,
         our_story: activity.ourStory || null,
         our_story_image: activity.ourStoryImage || null,
+        activity_type: activity.activityType || 'general',
       })
 
       if (activityError) {
@@ -320,6 +323,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
       if (updates.isAvailable !== undefined) updateData.is_available = updates.isAvailable
       if (updates.ourStory !== undefined) updateData.our_story = updates.ourStory
       if (updates.ourStoryImage !== undefined) updateData.our_story_image = updates.ourStoryImage
+      if (updates.activityType !== undefined) updateData.activity_type = updates.activityType
 
       const { error } = await supabase.from("activities").update(updateData).eq("id", id)
 

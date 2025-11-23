@@ -11,6 +11,19 @@ export interface User {
   email: string
   name: string
   type: UserType
+  businessType?: 'activity' | 'lodge'
+  businessDescription?: string
+  businessStory?: string
+  businessImages?: string[]
+  contactPhone?: string
+  contactEmail?: string
+  contactAddress?: string
+  ratesInfo?: string
+  policies?: string
+  planningInfo?: string
+  location?: string
+  website?: string
+  blogUrl?: string
 }
 
 interface AuthContextType {
@@ -110,6 +123,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: data.email,
           name: data.name,
           type: data.user_type as UserType,
+          businessType: data.business_type as 'activity' | 'lodge',
+          businessDescription: data.business_description,
+          businessStory: data.business_story,
+          businessImages: data.business_images || [],
+          contactPhone: data.contact_phone,
+          contactEmail: data.contact_email,
+          contactAddress: data.contact_address,
+          ratesInfo: data.rates_info,
+          policies: data.policies,
+          planningInfo: data.planning_info,
+          location: data.location,
+          website: data.website,
+          blogUrl: data.blog_url,
         })
       } else {
         console.log("[v0] No user profile found yet, will retry on next auth state change")
