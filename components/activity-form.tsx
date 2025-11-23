@@ -40,6 +40,8 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
       },
     ],
   )
+  const [ourStory, setOurStory] = useState(activity?.ourStory || "")
+  const [ourStoryImage, setOurStoryImage] = useState(activity?.ourStoryImage || "")
 
   const addIncluded = () => {
     if (newIncluded.trim()) {
@@ -85,6 +87,18 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
         }
         reader.readAsDataURL(file)
       })
+    }
+  }
+
+  const handleOurStoryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setOurStoryImage(base64String)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -142,6 +156,8 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
       images,
       isAvailable,
       availability: availability.filter((av) => av.date && av.slots.some((s) => s.time)),
+      ourStory,
+      ourStoryImage,
     }
 
     onSubmit(activityData)
@@ -531,6 +547,108 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
               </div>
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      {/* Our Story - Full Width */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Our Story</CardTitle>
+          <p className="text-sm text-muted-foreground">Share the story behind your business</p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Story Text Area */}
+          <div className="space-y-2">
+            <Label htmlFor="our-story">What is the story behind your business? *</Label>
+            <Textarea
+              id="our-story"
+              value={ourStory}
+              onChange={(e) => setOurStory(e.target.value)}
+              placeholder="Describe your business — what you do, why you serve, and the story behind it."
+              rows={6}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Describe your business — what you do, why you serve, and the story behind it.
+            </p>
+          </div>
+
+          {/* Story Image Upload */}
+          <div className="space-y-4">
+            <Label>Image for About Us Section</Label>
+            
+            {/* File Upload */}
+            <div className="space-y-4">
+              <Label htmlFor="story-file-upload" className="cursor-pointer">
+                <div className="flex items-center gap-2 border-2 border-dashed rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Choose File</p>
+                    <p className="text-xs text-muted-foreground">(Upload images (JPG, PNG, etc.))</p>
+                  </div>
+                </div>
+                <Input
+                  id="story-file-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleOurStoryImageUpload}
+                  className="hidden"
+                />
+              </Label>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or add image URL</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  type="url"
+                  value={ourStoryImage && !ourStoryImage.startsWith('data:') ? ourStoryImage : ''}
+                  onChange={(e) => setOurStoryImage(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                />
+                <Button 
+                  type="button" 
+                  onClick={() => {
+                    const input = document.querySelector('input[type="url"]') as HTMLInputElement
+                    if (input?.value) setOurStoryImage(input.value)
+                  }}
+                  disabled={!ourStoryImage || ourStoryImage.startsWith('data:')}
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+
+            {/* Image Preview */}
+            {ourStoryImage && (
+              <div className="relative">
+                <div className="relative h-48 w-full bg-muted rounded-md overflow-hidden">
+                  <img
+                    src={ourStoryImage || "/placeholder.svg"}
+                    alt="Our Story Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOurStoryImage("")}
+                  className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-2 hover:bg-destructive/90 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              Upload an image that represents your business and its story.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

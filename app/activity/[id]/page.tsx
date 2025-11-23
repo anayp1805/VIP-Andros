@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { useActivities } from "@/lib/activities-context"
@@ -20,8 +20,33 @@ export default function ActivityDetailPage() {
   const { activities } = useActivities()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isStoryImageVisible, setIsStoryImageVisible] = useState(false)
+  const storyImageRef = useRef<HTMLDivElement>(null)
 
   const activity = activities.find((a) => a.id === params.id)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsStoryImageVisible(true)
+          }
+        })
+      },
+      { threshold: 0.2 }
+    )
+
+    if (storyImageRef.current) {
+      observer.observe(storyImageRef.current)
+    }
+
+    return () => {
+      if (storyImageRef.current) {
+        observer.unobserve(storyImageRef.current)
+      }
+    }
+  }, [activity])
 
   if (!activity) {
     return (
@@ -224,6 +249,45 @@ export default function ActivityDetailPage() {
               </Card>
             )}
             {/* </CHANGE> */}
+
+            {/* Our Story Section */}
+            {activity.ourStory && (
+              <Card className="mt-8">
+                <CardContent className="pt-8 pb-8">
+                  <h2 className="text-4xl font-serif italic text-center text-slate mb-8" style={{ fontFamily: 'Georgia, serif' }}>
+                    Our Story
+                  </h2>
+                  
+                  <div className="grid md:grid-cols-2 gap-8 items-center">
+                    {/* Story Text */}
+                    <div className="space-y-4">
+                      <p className="text-slate-light leading-relaxed whitespace-pre-line text-base">
+                        {activity.ourStory}
+                      </p>
+                    </div>
+
+                    {/* Story Image with Fade-in Animation */}
+                    {activity.ourStoryImage && (
+                      <div 
+                        ref={storyImageRef}
+                        className={`relative h-80 rounded-lg overflow-hidden shadow-lg transition-all duration-1000 ease-out ${
+                          isStoryImageVisible 
+                            ? 'opacity-100 translate-y-0' 
+                            : 'opacity-0 translate-y-8'
+                        }`}
+                      >
+                        <Image
+                          src={activity.ourStoryImage || "/placeholder.svg"}
+                          alt="Our Story"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Booking Sidebar */}

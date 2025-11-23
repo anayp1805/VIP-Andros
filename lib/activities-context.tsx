@@ -23,6 +23,8 @@ export interface Activity {
     date: string
     slots: { time: string; capacity: number; booked: number }[]
   }[]
+  ourStory?: string
+  ourStoryImage?: string
 }
 
 export interface Booking {
@@ -132,6 +134,8 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
             images,
             isAvailable: activity.is_available,
             availability: [], // Will be populated from availability_slots
+            ourStory: activity.our_story || "",
+            ourStoryImage: activity.our_story_image || "",
           }
         })
 
@@ -255,6 +259,8 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         what_to_bring: activity.whatToBring,
         images: activity.images,
         is_available: activity.isAvailable,
+        our_story: activity.ourStory || null,
+        our_story_image: activity.ourStoryImage || null,
       })
 
       if (activityError) {
@@ -312,6 +318,8 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
       if (updates.whatToBring !== undefined) updateData.what_to_bring = updates.whatToBring
       if (updates.images !== undefined) updateData.images = updates.images
       if (updates.isAvailable !== undefined) updateData.is_available = updates.isAvailable
+      if (updates.ourStory !== undefined) updateData.our_story = updates.ourStory
+      if (updates.ourStoryImage !== undefined) updateData.our_story_image = updates.ourStoryImage
 
       const { error } = await supabase.from("activities").update(updateData).eq("id", id)
 
