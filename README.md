@@ -111,9 +111,10 @@ A full-stack Next.js application for booking activities and experiences. Compani
 4. **Set up the database**
    
    Run the SQL scripts in the `scripts/` folder in order using the Supabase SQL Editor:
-   - `001_initial_schema.sql`
-   - `002_seed_data.sql` (optional)
+   - `001_create_tables.sql`
+   - `002_create_user_trigger.sql`
    - `003_fix_company_name_visibility.sql`
+   - `004_add_lodge_fields.sql` (required for lodge/accommodation features)
 
 5. **Run the development server**
    \`\`\`cmd
@@ -134,15 +135,33 @@ A full-stack Next.js application for booking activities and experiences. Compani
 1. Go to your Supabase project dashboard
 2. Navigate to the SQL Editor
 3. Copy and paste each script from the `scripts/` folder
-4. Run them in order (001, 002, 003)
+4. Run them in order:
+   - `001_create_tables.sql` - Creates base tables (users, activities, bookings, etc.)
+   - `002_create_user_trigger.sql` - Sets up automatic user creation trigger
+   - `003_fix_company_name_visibility.sql` - Fixes RLS policies for company names
+   - `004_add_lodge_fields.sql` - Adds lodge-specific fields (rooms, amenities, policies)
+
+**Note:** If you're setting up a fresh database, run all scripts. If you're updating an existing database, only run the scripts you haven't run yet.
 
 ### Database Schema
 
 The application uses the following tables:
-- **users**: Stores user accounts (name, email, user_type)
+- **users**: Stores user accounts (name, email, user_type, business_type, lodge fields)
 - **activities**: Stores activity listings with details, pricing, and images
 - **availability_slots**: Stores time slots for each activity
 - **bookings**: Stores booking records
+
+#### Lodge-Specific Fields (users table)
+Added in migration 004:
+- `tagline` - Short marketing phrase for lodges
+- `external_booking_link` - Link to external booking system (ResNexus, Cloudbeds, etc.)
+- `room_types` - JSONB array of room configurations
+- `amenities` - Array of lodge amenities (WiFi, Pool, etc.)
+- `check_in_time`, `check_out_time` - Check-in/out times
+- `cancellation_policy` - Cancellation policy text
+- `minimum_stay` - Minimum stay requirement
+- `house_rules` - House rules text
+- `story_image` - Image for "Our Story" section
 
 ### Row Level Security (RLS)
 

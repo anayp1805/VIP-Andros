@@ -172,6 +172,26 @@ export function LodgeProfileForm({ initialData, onSubmit, onCancel, onBusinessTy
     setImages(images.filter((_, i) => i !== index))
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const reader = new FileReader()
+      
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setImages((prev) => [...prev, base64String])
+      }
+      
+      reader.readAsDataURL(file)
+    }
+    
+    // Reset input
+    e.target.value = ""
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -543,22 +563,56 @@ export function LodgeProfileForm({ initialData, onSubmit, onCancel, onBusinessTy
           <p className="text-sm text-muted-foreground">Add 10-20 images. First image will be the cover.</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              type="url"
-              value={newImageUrl}
-              onChange={(e) => setNewImageUrl(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  addImage()
-                }
-              }}
-            />
-            <Button type="button" onClick={addImage} size="icon">
-              <Plus className="h-4 w-4" />
-            </Button>
+          {/* File Upload */}
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label htmlFor="file-upload" className="cursor-pointer">
+                  <div className="flex items-center gap-2 border-2 border-dashed rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Choose Files or Drag & Drop</p>
+                      <p className="text-xs text-muted-foreground">Upload images (JPG, PNG, etc.)</p>
+                    </div>
+                  </div>
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </Label>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or add image URL</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                value={newImageUrl}
+                onChange={(e) => setNewImageUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    addImage()
+                  }
+                }}
+              />
+              <Button type="button" onClick={addImage} size="icon">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {images.length > 0 && (

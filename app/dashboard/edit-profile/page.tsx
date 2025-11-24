@@ -19,6 +19,8 @@ export default function EditProfilePage() {
   const { user, isLoading } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [showTypeChangeWarning, setShowTypeChangeWarning] = useState(false)
+  const [pendingBusinessType, setPendingBusinessType] = useState<'activity' | 'lodge' | null>(null)
 
   const [businessType, setBusinessType] = useState<'activity' | 'lodge'>('activity')
   const [businessDescription, setBusinessDescription] = useState("")
@@ -181,11 +183,55 @@ export default function EditProfilePage() {
             initialData={lodgeInitialData}
             onSubmit={handleLodgeSubmit}
             onCancel={() => router.push("/dashboard")}
-            onBusinessTypeChange={(type) => setBusinessType(type)}
+            onBusinessTypeChange={(type) => {
+              if (type === 'activity') {
+                setPendingBusinessType(type)
+                setShowTypeChangeWarning(true)
+              }
+            }}
           />
         </div>
 
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        
+        {/* Business Type Change Warning */}
+        {showTypeChangeWarning && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <Card className="max-w-md mx-4">
+              <CardHeader>
+                <CardTitle>Switch to Activity Provider?</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-slate-light">
+                  Switching to Activity Provider will show a simpler form. Your lodge information won't be lost, but you'll need to switch back to Lodge to edit it.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowTypeChangeWarning(false)
+                      setPendingBusinessType(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (pendingBusinessType) {
+                        setBusinessType(pendingBusinessType)
+                      }
+                      setShowTypeChangeWarning(false)
+                      setPendingBusinessType(null)
+                    }}
+                    className="bg-ocean-blue hover:bg-ocean-dark"
+                  >
+                    Switch to Activity Provider
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     )
   }
