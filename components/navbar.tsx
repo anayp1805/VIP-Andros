@@ -21,6 +21,10 @@ export function Navbar({ onAuthClick }: NavbarProps) {
         </Link>
 
         <div className="flex items-center gap-4">
+          <Button asChild variant="ghost">
+            <Link href="/connect">Connect</Link>
+          </Button>
+
           {user ? (
             <>
               <div className="flex items-center gap-2">
@@ -39,9 +43,14 @@ export function Navbar({ onAuthClick }: NavbarProps) {
               )}
 
               {user.type === "company" && (
-                <Button asChild variant="outline">
-                  <Link href="/dashboard">Dashboard</Link>
-                </Button>
+                <>
+                  <Button asChild variant="outline">
+                    <Link href="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button asChild>
+                    <Link href="/inbox">Inbox</Link>
+                  </Button>
+                </>
               )}
 
               <Button variant="ghost" size="icon" onClick={logout}>
