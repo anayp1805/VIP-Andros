@@ -17,10 +17,16 @@ export function Navbar({ onAuthClick }: NavbarProps) {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Mountain className="h-8 w-8 text-primary" />
-          <span className="text-2xl font-bold text-primary">Andros</span>
+          <span className="text-2xl font-bold text-primary">Tokuma</span>
         </Link>
 
         <div className="flex items-center gap-4">
+          <Button asChild variant="ghost">
+            <Link href="/projects">Projects</Link>
+          </Button>
+          <Button asChild variant="ghost">
+            <Link href="/info">Info</Link>
+          </Button>
           {user ? (
             <>
               <div className="flex items-center gap-2">
@@ -29,7 +35,7 @@ export function Navbar({ onAuthClick }: NavbarProps) {
                 <span className="text-xs text-muted-foreground">({user.type})</span>
               </div>
 
-              {user.type === "user" && (
+              {(user.type === "user" || user.type === "philanthropist") && (
                 <Button asChild variant="outline">
                   <Link href="/my-bookings">
                     <Calendar className="h-4 w-4 mr-2" />
@@ -38,9 +44,15 @@ export function Navbar({ onAuthClick }: NavbarProps) {
                 </Button>
               )}
 
-              {user.type === "company" && (
+              {(user.type === "company" || user.type === "philanthropist") && (
                 <Button asChild variant="outline">
                   <Link href="/dashboard">Dashboard</Link>
+                </Button>
+              )}
+
+              {user.type === "philanthropist" && (
+                <Button asChild variant="default">
+                  <Link href="/philanthropy">Philanthropy</Link>
                 </Button>
               )}
 

@@ -25,11 +25,11 @@ export default function MyBookingsPage() {
       router.push("/")
     }
 
-    if (user && user.type === "company") {
+    if (user && (user.type === "company")) {
       router.push("/dashboard")
     }
 
-    if (user && user.type === "user") {
+    if (user && (user.type === "user" || user.type === "philanthropist")) {
       setUserBookings(getUserBookings(user.id))
     }
   }, [user, isLoading, router, getUserBookings])
@@ -45,7 +45,7 @@ export default function MyBookingsPage() {
     )
   }
 
-  if (!user || user.type !== "user") {
+  if (!user || (user.type !== "user" && user.type !== "philanthropist")) {
     return null
   }
 

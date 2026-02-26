@@ -185,45 +185,65 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
       console.log("[v0] Activities: Fetching bookings for user type:", user.type)
       let query = supabase.from("bookings").select("*")
 
+      let combinedBookings: any[] = []
+
       if (user.type === "user") {
-        // Users see their own bookings
         query = query.eq("user_id", user.id)
+        const { data, error } = await query
+        if (error) throw error
+        combinedBookings = data || []
       } else if (user.type === "company") {
-        // Companies see bookings for their activities
         const companyActivityIds = activities.filter((a) => a.companyId === user.id).map((a) => a.id)
         if (companyActivityIds.length > 0) {
           query = query.in("activity_id", companyActivityIds)
+          const { data, error } = await query
+          if (error) throw error
+          combinedBookings = data || []
         } else {
-          // No activities yet, return empty
           console.log("[v0] Activities: No activities found for company")
           setBookings([])
           return
         }
+      } else if (user.type === "philanthropist") {
+        // As a user
+        const { data: userBookings, error: userErr } = await supabase
+          .from("bookings")
+          .select("*")
+          .eq("user_id", user.id)
+        if (userErr) throw userErr
+
+        // As an organization posting activities
+        const philanthropistActivityIds = activities.filter((a) => a.companyId === user.id).map((a) => a.id)
+        let orgBookings: any[] = []
+        if (philanthropistActivityIds.length > 0) {
+          const { data: orgData, error: orgErr } = await supabase
+            .from("bookings")
+            .select("*")
+            .in("activity_id", philanthropistActivityIds)
+          if (orgErr) throw orgErr
+          orgBookings = orgData || []
+        }
+
+        // merge, avoiding duplicates by id
+        const map = new Map<string, any>()
+        ;[...(userBookings || []), ...orgBookings].forEach((b) => map.set(b.id, b))
+        combinedBookings = Array.from(map.values())
       }
 
-      const { data, error } = await query
+      console.log("[v0] Activities: Found", combinedBookings.length, "bookings")
+      const transformedBookings: Booking[] = combinedBookings.map((booking) => ({
+        id: booking.id,
+        activityId: booking.activity_id,
+        userId: booking.user_id,
+        userName: booking.user_name,
+        userEmail: booking.user_email,
+        date: booking.date,
+        time: booking.time_slot,
+        status: booking.status as "confirmed" | "pending" | "cancelled",
+        createdAt: booking.created_at,
+      }))
 
-      if (error) {
-        console.error("[v0] Activities: Error fetching bookings:", error)
-        throw error
-      }
-
-      if (data) {
-        console.log("[v0] Activities: Found", data.length, "bookings")
-        const transformedBookings: Booking[] = data.map((booking) => ({
-          id: booking.id,
-          activityId: booking.activity_id,
-          userId: booking.user_id,
-          userName: booking.user_name,
-          userEmail: booking.user_email,
-          date: booking.date,
-          time: booking.time_slot,
-          status: booking.status as "confirmed" | "pending" | "cancelled",
-          createdAt: booking.created_at,
-        }))
-
-        setBookings(transformedBookings)
-      }
+      setBookings(transformedBookings)
     } catch (error) {
       console.error("[v0] Activities: Error fetching bookings:", error)
     }

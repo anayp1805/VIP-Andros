@@ -24,11 +24,11 @@ export default function DashboardPage() {
       router.push("/")
     }
 
-    if (user && user.type !== "company") {
+    if (user && user.type !== "company" && user.type !== "philanthropist") {
       router.push("/")
     }
 
-    if (user && user.type === "company") {
+    if (user && (user.type === "company" || user.type === "philanthropist")) {
       setCompanyActivities(getCompanyActivities(user.id))
     }
   }, [user, isLoading, router, getCompanyActivities])
@@ -57,7 +57,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (!user || user.type !== "company") {
+  if (!user || (user.type !== "company" && user.type !== "philanthropist")) {
     return null
   }
 

@@ -22,7 +22,7 @@ export default function EditActivityPage() {
       router.push("/")
     }
 
-    if (user && user.type !== "company") {
+    if (user && user.type !== "company" && user.type !== "philanthropist") {
       router.push("/")
     }
 
@@ -38,7 +38,7 @@ export default function EditActivityPage() {
     router.push("/dashboard")
   }
 
-  if (isLoading || !user || user.type !== "company" || !activity) {
+  if (isLoading || !user || (user.type !== "company" && user.type !== "philanthropist") || !activity) {
     return null
   }
 
