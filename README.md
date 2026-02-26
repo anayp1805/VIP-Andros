@@ -1,14 +1,16 @@
-# Andros 
+# Tokuma
 
-A full-stack Next.js application for booking activities and experiences. Companies can list their activities, and users can browse and book available time slots.
+A sustainability-first platform connecting students, organizations, and philanthropists. Companies can list activities, philanthropists can fund projects, and users can learn and participate.
 
 ## Features
 
 - **User Authentication**: Email/password authentication with Supabase Auth
 - **Activity Browsing**: Search and filter activities by location, category, and price
 - **Real-time Booking**: Book available time slots with instant confirmation
-- **Company Dashboard**: Companies can create, edit, and manage their activities
-- **User Dashboard**: Users can view their booking history and upcoming activities
+- **Company Dashboard**: Companies and philanthropists can create, edit, and manage their activities
+- **User Dashboard**: Users and philanthropists can view their booking history and upcoming activities
+- **Philanthropy Section**: Invite-only collaboration space with events and forum placeholder
+- **Projects**: Separate projects area for orgs to post impact work and students to apply
 - **Responsive Design**: Mobile-first design that works on all devices
 - **Image Upload**: Support for activity images with base64 encoding
 

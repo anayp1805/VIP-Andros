@@ -13,8 +13,8 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "Andros - Activity Booking Platform",
-  description: "Book amazing activities or list your experiences",
+  title: "Tokuma - Sustainability-First Platform",
+  description: "Tokuma connects learners, organizations, and philanthropists to build sustainable, circular-economy impact.",
     generator: 'v0.app'
 }
 

@@ -4,20 +4,27 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { createClient } from "@/lib/supabase/client"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
-export type UserType = "user" | "company"
+export type UserType = "user" | "company" | "philanthropist"
 
 export interface User {
   id: string
   email: string
   name: string
   type: UserType
+  companyExperienceLevel?: "education" | "expert" | null
 }
 
 interface AuthContextType {
   user: User | null
   supabaseUser: SupabaseUser | null
   login: (email: string, password: string) => Promise<boolean>
-  signup: (email: string, password: string, name: string, type: UserType) => Promise<boolean>
+  signup: (
+    email: string,
+    password: string,
+    name: string,
+    type: UserType,
+    options?: { companyExperience?: "education" | "expert"; accessCode?: string },
+  ) => Promise<boolean>
   logout: () => Promise<void>
   isLoading: boolean
 }
@@ -110,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: data.email,
           name: data.name,
           type: data.user_type as UserType,
+          companyExperienceLevel: (data.company_experience_level as "education" | "expert" | null) ?? null,
         })
       } else {
         console.log("[v0] No user profile found yet, will retry on next auth state change")
@@ -147,7 +155,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const signup = async (email: string, password: string, name: string, type: UserType): Promise<boolean> => {
+  const signup = async (
+    email: string,
+    password: string,
+    name: string,
+    type: UserType,
+    options?: { companyExperience?: "education" | "expert"; accessCode?: string },
+  ): Promise<boolean> => {
     if (!supabase) {
       console.error("[v0] Supabase client not initialized")
       return false
@@ -163,6 +177,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: {
             name,
             user_type: type,
+            company_experience: options?.companyExperience,
+            philanthropy_access_code: options?.accessCode,
           },
         },
       })
@@ -170,6 +186,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error("[v0] Signup error:", error)
         throw error
+      }
+
+      // Persist profile in public.users
+      if (data.user) {
+        const profilePayload: any = {
+          id: data.user.id,
+          email,
+          name,
+          user_type: type,
+          company_experience_level: options?.companyExperience || null,
+        }
+
+        const { error: profileError } = await supabase.from("users").upsert(profilePayload, { onConflict: "id" })
+        if (profileError) {
+          console.error("[v0] Profile upsert error:", profileError)
+        }
+
+        // Create philanthropist record if needed
+        if (type === "philanthropist") {
+          const { error: philanthropistError } = await supabase.from("philanthropists").upsert(
+            {
+              user_id: data.user.id,
+              full_name: name,
+              email,
+            },
+            { onConflict: "user_id" },
+          )
+
+          if (philanthropistError) {
+            console.error("[v0] Philanthropist upsert error:", philanthropistError)
+          }
+        }
       }
 
       console.log("[v0] Signup successful, session:", !!data.session)

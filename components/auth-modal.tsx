@@ -19,6 +19,8 @@ export function AuthModal({ onClose }: AuthModalProps) {
   const { login, signup } = useAuth()
   const [isLogin, setIsLogin] = useState(true)
   const [userType, setUserType] = useState<UserType>("user")
+  const [companyExperience, setCompanyExperience] = useState<"education" | "expert">("education")
+  const [philanthropyCode, setPhilanthropyCode] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
@@ -47,7 +49,16 @@ export function AuthModal({ onClose }: AuthModalProps) {
           setLoading(false)
           return
         }
-        success = await signup(email, password, name, userType)
+        if (userType === "philanthropist" && !philanthropyCode.trim()) {
+          setError("Access code is required for philanthropist signup.")
+          setLoading(false)
+          return
+        }
+
+        success = await signup(email, password, name, userType, {
+          companyExperience: userType === "company" ? companyExperience : undefined,
+          accessCode: userType === "philanthropist" ? philanthropyCode.trim() : undefined,
+        })
         if (!success) {
           setError("Signup failed. User may already exist.")
         } else {
@@ -69,16 +80,17 @@ export function AuthModal({ onClose }: AuthModalProps) {
         </Button>
 
         <CardHeader>
-          <CardTitle className="text-2xl">Welcome to Andros</CardTitle>
+          <CardTitle className="text-2xl">Welcome to Tokuma</CardTitle>
           <CardDescription>{isLogin ? "Sign in to your account" : "Create a new account"}</CardDescription>
         </CardHeader>
 
         <CardContent>
           {!isLogin && (
             <Tabs value={userType} onValueChange={(v) => setUserType(v as UserType)} className="mb-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="user">User</TabsTrigger>
                 <TabsTrigger value="company">Company</TabsTrigger>
+                <TabsTrigger value="philanthropist">Philanthropist</TabsTrigger>
               </TabsList>
             </Tabs>
           )}
@@ -95,6 +107,50 @@ export function AuthModal({ onClose }: AuthModalProps) {
                   onChange={(e) => setName(e.target.value)}
                   required
                 />
+              </div>
+            )}
+
+            {!isLogin && userType === "company" && (
+              <div className="space-y-2">
+                <Label htmlFor="company-experience">Company experience level</Label>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    type="button"
+                    variant={companyExperience === "education" ? "default" : "outline"}
+                    className="justify-start"
+                    onClick={() => setCompanyExperience("education")}
+                  >
+                    I want education and training to run a business
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={companyExperience === "expert" ? "default" : "outline"}
+                    className="justify-start"
+                    onClick={() => setCompanyExperience("expert")}
+                  >
+                    I am an expert — enroll my business anyway
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tokuma will use this to tailor onboarding and training soon. No extra steps yet.
+                </p>
+              </div>
+            )}
+
+            {!isLogin && userType === "philanthropist" && (
+              <div className="space-y-2">
+                <Label htmlFor="philanthropy-code">Access code (required)</Label>
+                <Input
+                  id="philanthropy-code"
+                  type="text"
+                  placeholder="Enter invitation code"
+                  value={philanthropyCode}
+                  onChange={(e) => setPhilanthropyCode(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Philanthropist access is invite-only. Code validation happens on the server.
+                </p>
               </div>
             )}
 
