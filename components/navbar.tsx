@@ -2,7 +2,14 @@
 
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { Mountain, User, LogOut, Calendar } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Mountain, LogOut, ChevronDown, User as UserIcon } from "lucide-react"
 import Link from "next/link"
 
 interface NavbarProps {
@@ -22,43 +29,62 @@ export function Navbar({ onAuthClick }: NavbarProps) {
 
         <div className="flex items-center gap-4">
           <Button asChild variant="ghost">
+            <Link href="/activities">Activities</Link>
+          </Button>
+          <Button asChild variant="ghost">
             <Link href="/projects">Projects</Link>
           </Button>
           <Button asChild variant="ghost">
             <Link href="/info">Info</Link>
           </Button>
+
           {user ? (
             <>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                <span className="text-sm font-medium">{user.name}</span>
-                <span className="text-xs text-muted-foreground">({user.type})</span>
-              </div>
-
-              {(user.type === "user" || user.type === "philanthropist") && (
-                <Button asChild variant="outline">
-                  <Link href="/my-bookings">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    My Bookings
-                  </Link>
-                </Button>
-              )}
-
-              {(user.type === "company" || user.type === "philanthropist") && (
-                <Button asChild variant="outline">
-                  <Link href="/dashboard">Dashboard</Link>
-                </Button>
-              )}
-
               {user.type === "philanthropist" && (
-                <Button asChild variant="default">
-                  <Link href="/philanthropy">Philanthropy</Link>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="default" className="flex items-center gap-2">
+                      Philanthropy
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/philanthropy">Main</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/donations">Donations</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
 
-              <Button variant="ghost" size="icon" onClick={logout}>
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="rounded-full border border-border hover:border-primary transition">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback>
+                        <UserIcon className="h-5 w-5 text-muted-foreground" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/my-bookings">Bookings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={logout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <Button onClick={onAuthClick}>Sign In</Button>

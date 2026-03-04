@@ -102,7 +102,7 @@ export default function PhilanthropyPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Community Forum</CardTitle>
-                <CardDescription>Private discussions for philanthropists (placeholder)</CardDescription>
+                <CardDescription>Private discussions for philanthropists (Coming Soon!)</CardDescription>
               </div>
               <MessageSquare className="h-5 w-5 text-primary" />
             </CardHeader>
