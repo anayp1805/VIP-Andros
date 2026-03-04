@@ -25,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${poppins.variable}`}>
+      <body suppressHydrationWarning className={`${inter.className} ${poppins.variable}`}>
         <AuthProvider>
           <ActivitiesProvider>{children}</ActivitiesProvider>
         </AuthProvider>
