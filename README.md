@@ -6,6 +6,7 @@ A sustainability-first platform connecting students, organizations, and philanth
 
 - **User Authentication**: Email/password authentication with Supabase Auth
 - **Activity Browsing**: Search and filter activities by location, category, and price
+- **Lodge Profiles**: Comprehensive accommodation profiles with room types, amenities, policies, and exclusive experiences
 - **Real-time Booking**: Book available time slots with instant confirmation
 - **Company Dashboard**: Companies and philanthropists can create, edit, and manage their activities
 - **User Dashboard**: Users and philanthropists can view their booking history and upcoming activities
@@ -169,6 +170,49 @@ RLS policies are enabled to ensure:
 2. **Create Activity**: Add a new activity with details, pricing, and images
 3. **Manage Activities**: Edit or delete your activities from the dashboard
 4. **View Bookings**: See who has booked your activities
+
+### For Lodges
+
+1. **Sign Up**: Create an account as a "Company"
+2. **Set Business Type**: Choose "Lodge" as your business type
+3. **Create Profile**: Fill out comprehensive lodge profile with:
+   - Room types and configurations
+   - Amenities (WiFi, Pool, Restaurant, etc.)
+   - Policies (check-in/out, cancellation, house rules)
+   - Image gallery (10-20 images recommended)
+   - External booking link (ResNexus, Cloudbeds, Airbnb, etc.)
+4. **Add Experiences**: Create lodge-specific experiences (spa, dinners, activities)
+5. **Manage Profile**: Update your lodge information from the dashboard
+
+## Lodge Feature
+
+The platform now supports comprehensive lodge/accommodation profiles with the following capabilities:
+
+### Lodge Profiles Include:
+- **Room Types**: Multiple room configurations with individual amenities
+- **Amenities**: Lodge-wide amenities (Free WiFi, Pool, Beach Access, etc.)
+- **Policies**: Check-in/out times, cancellation policy, minimum stay, house rules
+- **Image Gallery**: Multiple images showcasing the property
+- **External Booking**: Integration with booking systems (ResNexus, Cloudbeds, Airbnb)
+- **Our Story**: Rich narrative section with images
+- **Contact Info**: Email, phone, address, website, blog
+
+### Activity Types:
+- **General Activities**: Public activities shown on main activities page
+- **Lodge Experiences**: Exclusive experiences shown only on the lodge's profile page (e.g., spa treatments, private dinners, room upgrades)
+
+### How to Set Up a Lodge:
+1. Run database migration: `scripts/004_add_lodge_fields.sql` in Supabase SQL Editor
+2. Sign up as a Company
+3. Navigate to your profile/dashboard
+4. Set business type to "Lodge"
+5. Fill out the lodge profile form
+6. Add room types with amenities
+7. Upload images (first image becomes cover photo)
+8. Set policies and contact information
+9. Optionally create lodge experiences
+
+For detailed implementation information, see `LODGE_FEATURE_IMPLEMENTATION.md`.
 
 ## Deployment
 

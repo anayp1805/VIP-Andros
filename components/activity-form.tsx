@@ -40,6 +40,9 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
       },
     ],
   )
+  const [ourStory, setOurStory] = useState(activity?.ourStory || "")
+  const [ourStoryImage, setOurStoryImage] = useState(activity?.ourStoryImage || "")
+  const [activityType, setActivityType] = useState<'general' | 'lodge-experience'>(activity?.activityType || 'general')
 
   const addIncluded = () => {
     if (newIncluded.trim()) {
@@ -142,6 +145,9 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
       images,
       isAvailable,
       availability: availability.filter((av) => av.date && av.slots.some((s) => s.time)),
+      ourStory,
+      ourStoryImage,
+      activityType,
     }
 
     onSubmit(activityData)
@@ -149,6 +155,28 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-6xl mx-auto">
+      {/* Activity Type - First Question */}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="activity-type">Activity Type *</Label>
+            <select
+              id="activity-type"
+              value={activityType}
+              onChange={(e) => setActivityType(e.target.value as 'general' | 'lodge-experience')}
+              className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              required
+            >
+              <option value="general">General Activity (Tours, Excursions, etc.)</option>
+              <option value="lodge-experience">Lodge Experience (Spa, Private Dinner, etc.)</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              General activities appear on the main page. Lodge experiences only show on your lodge page.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid md:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
@@ -467,7 +495,8 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
         </CardContent>
       </Card>
 
-      {/* Availability - Full Width */}
+      {/* Availability - Full Width - Only for general activities */}
+      {activityType === 'general' && (
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -531,6 +560,42 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
               </div>
             </div>
           ))}
+        </CardContent>
+      </Card>
+      )}
+
+      {/* Our Story - Full Width */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Our Story</CardTitle>
+          <p className="text-sm text-muted-foreground">Share the story behind your business</p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="our-story">What is the story behind your business?</Label>
+            <Textarea
+              id="our-story"
+              value={ourStory}
+              onChange={(e) => setOurStory(e.target.value)}
+              placeholder="Describe your business — what you do, why you serve, and the story behind it."
+              rows={6}
+              className="resize-none"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="our-story-image">Story Image URL</Label>
+            <Input
+              id="our-story-image"
+              type="url"
+              value={ourStoryImage}
+              onChange={(e) => setOurStoryImage(e.target.value)}
+              placeholder="https://example.com/story-image.jpg"
+            />
+            <p className="text-xs text-muted-foreground">
+              Add an image that represents your business and its story.
+            </p>
+          </div>
         </CardContent>
       </Card>
 
