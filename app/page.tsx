@@ -1,167 +1,219 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
+import { useActivities } from "@/lib/activities-context"
 import { Navbar } from "@/components/navbar"
+import { AuthModal } from "@/components/auth-modal"
+import { ActivityCard } from "@/components/activity-card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Sparkles, Globe2, Users, HeartHandshake, Layers, ArrowRight } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { createClient } from "@/lib/supabase/client"
+import { Search, MapPin } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
-const highlights = [
-  {
-    title: "Learn & build",
-    desc: "Hands-on activities and circular-economy experiences hosted by vetted partners.",
-    icon: <Layers className="h-5 w-5" />,
-  },
-  {
-    title: "Collaborate",
-    desc: "Students, organizations, and philanthropists co-design projects with clear outcomes.",
-    icon: <Users className="h-5 w-5" />,
-  },
-  {
-    title: "Fund impact",
-    desc: "Directed donations and project funding with transparent tracking.",
-    icon: <HeartHandshake className="h-5 w-5" />,
-  },
-  {
-    title: "Interoperability",
-    desc: "Open data mindset so your work and learnings move across teams and tools.",
-    icon: <Globe2 className="h-5 w-5" />,
-  },
-]
+type HomeTab = 'activities' | 'lodges'
 
-export default function WelcomePage() {
+interface Lodge {
+  id: string
+  name: string
+  businessDescription?: string
+  location?: string
+  businessImages?: string[]
+}
+
+export default function HomePage() {
   const { user } = useAuth()
-  const [ctaHref, setCtaHref] = useState("/activities")
+  const { activities } = useActivities()
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState<HomeTab>('activities')
+  const [lodges, setLodges] = useState<Lodge[]>([])
 
   useEffect(() => {
-    if (!user) {
-      setCtaHref("/activities")
-    } else if (user.type === "philanthropist") {
-      setCtaHref("/philanthropy")
-    } else if (user.type === "company") {
-      setCtaHref("/dashboard")
-    } else {
-      setCtaHref("/activities")
+    fetchLodges()
+  }, [])
+
+  const fetchLodges = async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('user_type', 'company')
+        .eq('business_type', 'lodge')
+
+      if (error) throw error
+
+      if (data) {
+        setLodges(data.map(lodge => ({
+          id: lodge.id,
+          name: lodge.name,
+          businessDescription: lodge.business_description,
+          location: lodge.location,
+          businessImages: lodge.business_images || [],
+        })))
+      }
+    } catch (error) {
+      console.error('Error fetching lodges:', error)
     }
-  }, [user])
+  }
+
+  const generalActivities = activities.filter((activity) => activity.activityType === 'general')
+  
+  const filteredActivities = generalActivities.filter((activity) => {
+    const query = searchQuery.toLowerCase()
+    const title = activity.title?.toLowerCase() || ""
+    const description = activity.experienceDescription?.toLowerCase() || ""
+    const tagline = activity.tagline?.toLowerCase() || ""
+
+    return title.includes(query) || description.includes(query) || tagline.includes(query)
+  })
+
+  const filteredLodges = lodges.filter((lodge) => {
+    const query = searchQuery.toLowerCase()
+    const name = lodge.name?.toLowerCase() || ""
+    const description = lodge.businessDescription?.toLowerCase() || ""
+    const location = lodge.location?.toLowerCase() || ""
+
+    return name.includes(query) || description.includes(query) || location.includes(query)
+  })
 
   return (
     <div className="min-h-screen bg-sand">
-      <Navbar onAuthClick={() => {}} />
+      <Navbar onAuthClick={() => setShowAuthModal(true)} />
 
+      {/* Hero Section */}
       <section className="bg-gradient-to-br from-ocean-blue to-ocean-dark text-white py-20">
-        <div className="container mx-auto px-4 grid gap-10 lg:grid-cols-2 items-center">
-          <div className="space-y-6">
-            <Badge variant="secondary" className="bg-white/15 text-white border-white/30">
-              Welcome to Tokuma
-            </Badge>
-            <h1 className="text-5xl font-bold leading-tight text-balance">
-              Build sustainable impact with learning, collaboration, and philanthropy in one place.
-            </h1>
-            <p className="text-lg text-white/80 max-w-2xl">
-              Tokuma connects learners, organizations, and philanthropists to create circular-economy projects, fund what
-              matters, and track outcomes together.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button size="lg" asChild className="bg-white text-ocean-dark hover:bg-white/90">
-                <a href={ctaHref}>Get started</a>
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                asChild
-                className="bg-white/15 text-white border border-white/50 hover:bg-white/25"
-              >
-                <a href="/activities">Explore activities</a>
-              </Button>
-            </div>
-          </div>
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-5xl font-bold mb-4 text-balance">Discover Amazing Activities</h1>
+          <p className="text-xl mb-8 text-balance max-w-2xl mx-auto">
+            Book unforgettable experiences from trusted providers around the world
+          </p>
 
-          <div className="grid gap-4">
-            {highlights.map((item) => (
-              <Card key={item.title} className="bg-white/10 border-white/20 text-white">
-                <CardHeader className="flex-row items-center gap-3 pb-2">
-                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">{item.icon}</div>
-                  <CardTitle className="text-xl">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0 text-white/80">{item.desc}</CardContent>
-              </Card>
-            ))}
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate" />
+            <Input
+              type="text"
+              placeholder="Search for activities..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-14 text-lg bg-white text-slate"
+            />
           </div>
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-12 grid gap-6 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Activities</CardTitle>
-            <CardDescription>Find and book experiences aligned to sustainability and circular economy.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="ghost" asChild className="px-0 text-ocean-blue">
-              <a href="/activities" className="flex items-center gap-2">
-                Browse activities <ArrowRight className="h-4 w-4" />
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Projects</CardTitle>
-            <CardDescription>Submit or apply to projects that advance education and interoperability.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="ghost" asChild className="px-0 text-ocean-blue">
-              <a href="/projects" className="flex items-center gap-2">
-                See projects <ArrowRight className="h-4 w-4" />
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Philanthropy</CardTitle>
-            <CardDescription>Invite-only space to coordinate funding and measure results.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="ghost" asChild className="px-0 text-ocean-blue">
-              <a href="/philanthropy" className="flex items-center gap-2">
-                Open philanthropy <ArrowRight className="h-4 w-4" />
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Tab Navigation */}
+      <section className="container mx-auto px-4 pt-8">
+        <div className="flex gap-8 border-b mb-8">
+          <button
+            onClick={() => setActiveTab('activities')}
+            className={`pb-4 px-2 border-b-2 transition-colors font-semibold ${
+              activeTab === 'activities'
+                ? 'border-ocean-blue text-ocean-blue'
+                : 'border-transparent text-slate-light hover:text-slate'
+            }`}
+          >
+            Available Activities
+          </button>
+          <button
+            onClick={() => setActiveTab('lodges')}
+            className={`pb-4 px-2 border-b-2 transition-colors font-semibold ${
+              activeTab === 'lodges'
+                ? 'border-ocean-blue text-ocean-blue'
+                : 'border-transparent text-slate-light hover:text-slate'
+            }`}
+          >
+            Lodges
+          </button>
+        </div>
       </section>
 
-      <section className="container mx-auto px-4 pb-16">
-        <Card>
-          <CardHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle>Why Tokuma?</CardTitle>
-              <CardDescription>Education • Interoperability • Philanthropy</CardDescription>
+      {/* Activities Tab */}
+      {activeTab === 'activities' && (
+        <section className="container mx-auto px-4 pb-12">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-slate">Available Activities</h2>
+            <p className="text-muted-foreground">{filteredActivities.length} activities found</p>
+          </div>
+
+          {filteredActivities.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">No activities found. Try a different search term.</p>
             </div>
-            <Sparkles className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3 text-sm text-muted-foreground">
-            <div>
-              <p className="font-semibold text-slate">Education</p>
-              <p>Real-world experiences that upskill students and teams.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredActivities.map((activity) => (
+                <ActivityCard key={activity.id} activity={activity} />
+              ))}
             </div>
-            <div>
-              <p className="font-semibold text-slate">Interoperability</p>
-              <p>Shared standards and data so work is portable across partners.</p>
+          )}
+        </section>
+      )}
+
+      {/* Lodges Tab */}
+      {activeTab === 'lodges' && (
+        <section className="container mx-auto px-4 pb-12">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-slate">Lodges & Accommodations</h2>
+            <p className="text-muted-foreground">{filteredLodges.length} lodges found</p>
+          </div>
+
+          {filteredLodges.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">No lodges found. Try a different search term.</p>
             </div>
-            <div>
-              <p className="font-semibold text-slate">Philanthropy</p>
-              <p>Transparent funding flows and reporting to measure outcomes.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredLodges.map((lodge) => (
+                <Card key={lodge.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <div className="relative h-48 w-full bg-muted">
+                    {lodge.businessImages && lodge.businessImages.length > 0 ? (
+                      <Image
+                        src={lodge.businessImages[0] || "/placeholder.svg"}
+                        alt={lodge.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        No image
+                      </div>
+                    )}
+                  </div>
+
+                  <CardHeader>
+                    <CardTitle className="text-xl">{lodge.name}</CardTitle>
+                    {lodge.location && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {lodge.location}
+                      </p>
+                    )}
+                  </CardHeader>
+
+                  <CardContent>
+                    {lodge.businessDescription && (
+                      <p className="text-sm text-slate-light line-clamp-3 mb-4">
+                        {lodge.businessDescription}
+                      </p>
+                    )}
+                    <Button asChild className="w-full bg-ocean-blue hover:bg-ocean-dark text-white">
+                      <Link href={`/business/${lodge.id}`}>View Lodge</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      </section>
+          )}
+        </section>
+      )}
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   )
 }
