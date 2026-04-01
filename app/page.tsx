@@ -93,7 +93,7 @@ export default function WelcomePage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-4 py-12 grid gap-6 lg:grid-cols-3">
+      <section className="container mx-auto px-4 py-12 grid gap-6 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle>Activities</CardTitle>
@@ -117,6 +117,20 @@ export default function WelcomePage() {
             <Button variant="ghost" asChild className="px-0 text-ocean-blue">
               <a href="/projects" className="flex items-center gap-2">
                 See projects <ArrowRight className="h-4 w-4" />
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Investments</CardTitle>
+            <CardDescription>Discover ventures, compare funding structures, and preview investor workflows.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="ghost" asChild className="px-0 text-ocean-blue">
+              <a href="/investments" className="flex items-center gap-2">
+                Open investments <ArrowRight className="h-4 w-4" />
               </a>
             </Button>
           </CardContent>
