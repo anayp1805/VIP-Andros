@@ -35,6 +35,9 @@ export function Navbar({ onAuthClick }: NavbarProps) {
             <Link href="/projects">Projects</Link>
           </Button>
           <Button asChild variant="ghost">
+            <Link href="/investments">Investments</Link>
+          </Button>
+          <Button asChild variant="ghost">
             <Link href="/info">Info</Link>
           </Button>
 
