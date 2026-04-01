@@ -23,6 +23,9 @@ export interface Activity {
     date: string
     slots: { time: string; capacity: number; booked: number }[]
   }[]
+  ourStory?: string
+  ourStoryImage?: string
+  activityType: 'general' | 'lodge-experience'
 }
 
 export interface Booking {
@@ -50,7 +53,7 @@ interface ActivitiesContextType {
     userEmail: string,
     date: string,
     time: string,
-  ) => boolean
+  ) => Promise<boolean>
   getCompanyActivities: (companyId: string) => Activity[]
   getUserBookings: (userId: string) => Booking[]
 }
@@ -132,6 +135,9 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
             images,
             isAvailable: activity.is_available,
             availability: [], // Will be populated from availability_slots
+            ourStory: activity.our_story || "",
+            ourStoryImage: activity.our_story_image || "",
+            activityType: activity.activity_type || 'general',
           }
         })
 

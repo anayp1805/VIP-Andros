@@ -71,10 +71,16 @@ export default function DashboardPage() {
             <h1 className="text-4xl font-bold text-slate mb-2">Company Dashboard</h1>
             <p className="text-muted-foreground">Manage your activities and bookings</p>
           </div>
-          <Button onClick={() => router.push("/dashboard/new-activity")} className="bg-ocean-blue hover:bg-ocean-dark">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Activity
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={() => router.push("/setup-lodge")} variant="outline" className="border-ocean-blue text-ocean-blue hover:bg-ocean-blue hover:text-white">
+              <Edit className="h-4 w-4 mr-2" />
+              {user.businessType === 'lodge' ? 'Edit Lodge Profile' : 'Set Up Lodge Profile'}
+            </Button>
+            <Button onClick={() => router.push("/dashboard/new-activity")} className="bg-ocean-blue hover:bg-ocean-dark">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Activity
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
