@@ -24,10 +24,10 @@ export default function NewActivityPage() {
     }
   }, [user, isLoading, router])
 
-  const handleSubmit = (activityData: any) => {
+  const handleSubmit = async (activityData: any) => {
     if (!user) return
 
-    addActivity({
+    await addActivity({
       ...activityData,
       companyId: user.id,
       companyName: user.name,

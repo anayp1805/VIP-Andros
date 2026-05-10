@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
+import type { CancellationPolicy } from "@/lib/cancellation-policy"
 
 export interface Activity {
   id: string
@@ -19,6 +20,7 @@ export interface Activity {
   whatToBring: string[]
   images: string[]
   isAvailable: boolean
+  cancellationPolicy: CancellationPolicy
   availability: {
     date: string
     slots: { time: string; capacity: number; booked: number }[]
@@ -33,14 +35,14 @@ export interface Booking {
   userEmail: string
   date: string
   time: string
-  status: "confirmed" | "pending" | "cancelled"
+  status: "confirmed" | "pending" | "cancelled" | "cancelled_by_user"
   createdAt: string
 }
 
 interface ActivitiesContextType {
   activities: Activity[]
   bookings: Booking[]
-  addActivity: (activity: Omit<Activity, "id">) => void
+  addActivity: (activity: Omit<Activity, "id">) => Promise<void>
   updateActivity: (id: string, activity: Partial<Activity>) => void
   deleteActivity: (id: string) => void
   bookActivity: (
@@ -50,7 +52,8 @@ interface ActivitiesContextType {
     userEmail: string,
     date: string,
     time: string,
-  ) => boolean
+  ) => Promise<boolean>
+  cancelBooking: (bookingId: string) => Promise<boolean>
   getCompanyActivities: (companyId: string) => Activity[]
   getUserBookings: (userId: string) => Booking[]
 }
@@ -131,6 +134,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
             whatToBring: activity.what_to_bring || [],
             images,
             isAvailable: activity.is_available,
+            cancellationPolicy: (activity.cancellation_policy as CancellationPolicy | null) ?? "moderate",
             availability: [], // Will be populated from availability_slots
           }
         })
@@ -239,7 +243,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         userEmail: booking.user_email,
         date: booking.date,
         time: booking.time_slot,
-        status: booking.status as "confirmed" | "pending" | "cancelled",
+        status: booking.status as Booking["status"],
         createdAt: booking.created_at,
       }))
 
@@ -261,7 +265,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
       const activityId = Math.random().toString(36).substr(2, 9)
 
       // Insert activity
-      const { error: activityError } = await supabase.from("activities").insert({
+      const activityPayload = {
         id: activityId,
         company_id: user.id,
         title: activity.title,
@@ -275,7 +279,15 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         what_to_bring: activity.whatToBring,
         images: activity.images,
         is_available: activity.isAvailable,
-      })
+        cancellation_policy: activity.cancellationPolicy,
+      }
+
+      let { error: activityError } = await supabase.from("activities").insert(activityPayload)
+
+      if (activityError && activityError.message.includes("cancellation_policy")) {
+        const { cancellation_policy: _cancellationPolicy, ...legacyPayload } = activityPayload
+        ;({ error: activityError } = await supabase.from("activities").insert(legacyPayload))
+      }
 
       if (activityError) {
         console.error("[v0] Activities: Error inserting activity:", activityError)
@@ -332,6 +344,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
       if (updates.whatToBring !== undefined) updateData.what_to_bring = updates.whatToBring
       if (updates.images !== undefined) updateData.images = updates.images
       if (updates.isAvailable !== undefined) updateData.is_available = updates.isAvailable
+      if (updates.cancellationPolicy !== undefined) updateData.cancellation_policy = updates.cancellationPolicy
 
       const { error } = await supabase.from("activities").update(updateData).eq("id", id)
 
@@ -463,6 +476,36 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
     return bookings.filter((b) => b.userId === userId)
   }
 
+  const cancelBooking = async (bookingId: string): Promise<boolean> => {
+    if (!supabase) {
+      console.error("[v0] Activities: Cannot cancel booking - supabase not initialized")
+      return false
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .update({ status: "cancelled_by_user" })
+        .eq("id", bookingId)
+        .select("id, status")
+        .maybeSingle()
+
+      if (error) throw error
+      if (!data) throw new Error("Booking was not updated. Check the bookings update RLS policy.")
+
+      await fetchBookings()
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.id === bookingId ? { ...booking, status: "cancelled_by_user" } : booking,
+        ),
+      )
+      return true
+    } catch (error) {
+      console.error("[v0] Activities: Error cancelling booking:", error)
+      return false
+    }
+  }
+
   return (
     <ActivitiesContext.Provider
       value={{
@@ -472,6 +515,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         updateActivity,
         deleteActivity,
         bookActivity,
+        cancelBooking,
         getCompanyActivities,
         getUserBookings,
       }}

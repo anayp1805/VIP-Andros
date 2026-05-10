@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { X, Plus, Calendar, Upload } from "lucide-react"
+import type { CancellationPolicy } from "@/lib/cancellation-policy"
 
 interface ActivityFormProps {
   activity?: Activity
@@ -32,6 +34,9 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
   const [images, setImages] = useState<string[]>(activity?.images || [])
   const [newImageUrl, setNewImageUrl] = useState("")
   const [isAvailable, setIsAvailable] = useState(activity?.isAvailable ?? true)
+  const [cancellationPolicy, setCancellationPolicy] = useState<CancellationPolicy>(
+    activity?.cancellationPolicy || "moderate",
+  )
   const [availability, setAvailability] = useState(
     activity?.availability || [
       {
@@ -141,6 +146,7 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
       whatToBring,
       images,
       isAvailable,
+      cancellationPolicy,
       availability: availability.filter((av) => av.date && av.slots.some((s) => s.time)),
     }
 
@@ -247,6 +253,25 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
                 </div>
                 <Switch id="status" checked={isAvailable} onCheckedChange={setIsAvailable} />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6 space-y-2">
+              <Label htmlFor="cancellation-policy">Cancellation policy</Label>
+              <Select
+                value={cancellationPolicy}
+                onValueChange={(value) => setCancellationPolicy(value as CancellationPolicy)}
+              >
+                <SelectTrigger id="cancellation-policy">
+                  <SelectValue placeholder="Select policy" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="flexible">Flexible</SelectItem>
+                  <SelectItem value="moderate">Moderate</SelectItem>
+                  <SelectItem value="strict">Strict</SelectItem>
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
         </div>
