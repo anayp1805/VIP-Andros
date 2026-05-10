@@ -40,9 +40,9 @@ export interface Booking {
 interface ActivitiesContextType {
   activities: Activity[]
   bookings: Booking[]
-  addActivity: (activity: Omit<Activity, "id">) => void
-  updateActivity: (id: string, activity: Partial<Activity>) => void
-  deleteActivity: (id: string) => void
+  addActivity: (activity: Omit<Activity, "id">) => Promise<void>
+  updateActivity: (id: string, activity: Partial<Activity>) => Promise<void>
+  deleteActivity: (id: string) => Promise<void>
   bookActivity: (
     activityId: string,
     userId: string,
@@ -50,7 +50,7 @@ interface ActivitiesContextType {
     userEmail: string,
     date: string,
     time: string,
-  ) => boolean
+  ) => Promise<boolean>
   getCompanyActivities: (companyId: string) => Activity[]
   getUserBookings: (userId: string) => Booking[]
 }
@@ -68,30 +68,22 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
     try {
       const client = createClient()
       setSupabase(client)
-      console.log("[v0] Activities: Supabase client created successfully")
     } catch (error) {
-      console.error("[v0] Activities: Failed to create Supabase client:", error)
+      console.error("Failed to create Supabase client:", error)
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
     if (!supabase) return
-
     fetchActivities()
-    if (user) {
-      fetchBookings()
-    }
+    if (user) fetchBookings()
   }, [user, supabase])
 
   const fetchActivities = async () => {
-    if (!supabase) {
-      console.error("[v0] Activities: Supabase client not initialized")
-      return
-    }
+    if (!supabase) return
 
     try {
-      console.log("[v0] Activities: Fetching activities...")
       const { data, error } = await supabase
         .from("activities")
         .select(
@@ -102,20 +94,12 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         )
         .order("created_at", { ascending: false })
 
-      if (error) {
-        console.error("[v0] Activities: Error fetching activities:", error)
-        throw error
-      }
+      if (error) throw error
 
       if (data) {
-        console.log("[v0] Activities: Found", data.length, "activities")
-        console.log("[v0] Activities: Raw data from database:", JSON.stringify(data, null, 2))
-        // Transform database format to app format
         const transformedActivities: Activity[] = data.map((activity) => {
           const images =
             activity.images && activity.images.length > 0 ? activity.images : ["/diverse-group-activity.png"]
-          console.log(`[v0] Activities: Activity "${activity.title}" images:`, images)
-          console.log(`[v0] Activities: Activity "${activity.title}" company data:`, activity.company)
           return {
             id: activity.id,
             companyId: activity.company_id,
@@ -131,21 +115,26 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
             whatToBring: activity.what_to_bring || [],
             images,
             isAvailable: activity.is_available,
-            availability: [], // Will be populated from availability_slots
+            availability: [],
           }
         })
 
-        // Fetch availability slots for each activity
         const activitiesWithSlots = await Promise.all(
           transformedActivities.map(async (activity) => {
-            const { data: slots } = await supabase.from("availability_slots").select("*").eq("activity_id", activity.id)
+            const { data: slots } = await supabase
+              .from("availability_slots")
+              .select("*")
+              .eq("activity_id", activity.id)
 
-            // Group slots by date
             const availabilityMap = new Map<string, { time: string; capacity: number; booked: number }[]>()
 
             slots?.forEach((slot) => {
-              const date = new Date()
-              date.setDate(date.getDate() + slot.day_of_week)
+              // Compute the next occurrence of this weekday from today (A2 fix)
+              const today = new Date()
+              today.setHours(0, 0, 0, 0)
+              const daysUntil = (slot.day_of_week - today.getDay() + 7) % 7
+              const date = new Date(today)
+              date.setDate(today.getDate() + daysUntil)
               const dateStr = date.toISOString().split("T")[0]
 
               if (!availabilityMap.has(dateStr)) {
@@ -169,10 +158,9 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         )
 
         setActivities(activitiesWithSlots)
-        console.log("[v0] Activities: Successfully loaded", activitiesWithSlots.length, "activities with slots")
       }
     } catch (error) {
-      console.error("[v0] Activities: Error fetching activities:", error)
+      console.error("Error fetching activities:", error)
     } finally {
       setLoading(false)
     }
@@ -182,39 +170,34 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
     if (!user || !supabase) return
 
     try {
-      console.log("[v0] Activities: Fetching bookings for user type:", user.type)
-      let query = supabase.from("bookings").select("*")
-
-      let combinedBookings: any[] = []
+      let combinedBookings: Record<string, unknown>[] = []
 
       if (user.type === "user") {
-        query = query.eq("user_id", user.id)
-        const { data, error } = await query
+        const { data, error } = await supabase.from("bookings").select("*").eq("user_id", user.id)
         if (error) throw error
         combinedBookings = data || []
       } else if (user.type === "company") {
         const companyActivityIds = activities.filter((a) => a.companyId === user.id).map((a) => a.id)
         if (companyActivityIds.length > 0) {
-          query = query.in("activity_id", companyActivityIds)
-          const { data, error } = await query
+          const { data, error } = await supabase
+            .from("bookings")
+            .select("*")
+            .in("activity_id", companyActivityIds)
           if (error) throw error
           combinedBookings = data || []
         } else {
-          console.log("[v0] Activities: No activities found for company")
           setBookings([])
           return
         }
       } else if (user.type === "philanthropist") {
-        // As a user
         const { data: userBookings, error: userErr } = await supabase
           .from("bookings")
           .select("*")
           .eq("user_id", user.id)
         if (userErr) throw userErr
 
-        // As an organization posting activities
         const philanthropistActivityIds = activities.filter((a) => a.companyId === user.id).map((a) => a.id)
-        let orgBookings: any[] = []
+        let orgBookings: Record<string, unknown>[] = []
         if (philanthropistActivityIds.length > 0) {
           const { data: orgData, error: orgErr } = await supabase
             .from("bookings")
@@ -224,43 +207,35 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
           orgBookings = orgData || []
         }
 
-        // merge, avoiding duplicates by id
-        const map = new Map<string, any>()
-        ;[...(userBookings || []), ...orgBookings].forEach((b) => map.set(b.id, b))
+        const map = new Map<string, Record<string, unknown>>()
+        ;[...(userBookings || []), ...orgBookings].forEach((b) => map.set(b.id as string, b))
         combinedBookings = Array.from(map.values())
       }
 
-      console.log("[v0] Activities: Found", combinedBookings.length, "bookings")
       const transformedBookings: Booking[] = combinedBookings.map((booking) => ({
-        id: booking.id,
-        activityId: booking.activity_id,
-        userId: booking.user_id,
-        userName: booking.user_name,
-        userEmail: booking.user_email,
-        date: booking.date,
-        time: booking.time_slot,
+        id: booking.id as string,
+        activityId: booking.activity_id as string,
+        userId: booking.user_id as string,
+        userName: booking.user_name as string,
+        userEmail: booking.user_email as string,
+        date: booking.date as string,
+        time: booking.time_slot as string,
         status: booking.status as "confirmed" | "pending" | "cancelled",
-        createdAt: booking.created_at,
+        createdAt: booking.created_at as string,
       }))
 
       setBookings(transformedBookings)
     } catch (error) {
-      console.error("[v0] Activities: Error fetching bookings:", error)
+      console.error("Error fetching bookings:", error)
     }
   }
 
   const addActivity = async (activity: Omit<Activity, "id">) => {
-    if (!user || !supabase) {
-      console.error("[v0] Activities: Cannot add activity - user or supabase not initialized")
-      return
-    }
+    if (!user || !supabase) return
 
     try {
-      console.log("[v0] Activities: Adding new activity:", activity.title)
-      console.log("[v0] Activities: Images being saved:", activity.images)
-      const activityId = Math.random().toString(36).substr(2, 9)
+      const activityId = crypto.randomUUID()
 
-      // Insert activity
       const { error: activityError } = await supabase.from("activities").insert({
         id: activityId,
         company_id: user.id,
@@ -277,49 +252,33 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         is_available: activity.isAvailable,
       })
 
-      if (activityError) {
-        console.error("[v0] Activities: Error inserting activity:", activityError)
-        throw activityError
-      }
+      if (activityError) throw activityError
 
-      // Insert availability slots
       const slotsToInsert = activity.availability.flatMap((av) =>
-        av.slots.map((slot) => {
-          const dayOfWeek = new Date(av.date).getDay()
-          return {
-            activity_id: activityId,
-            day_of_week: dayOfWeek,
-            time_slot: slot.time,
-            bookings_count: 0,
-          }
-        }),
+        av.slots.map((slot) => ({
+          activity_id: activityId,
+          day_of_week: new Date(av.date).getDay(),
+          time_slot: slot.time,
+          bookings_count: 0,
+        })),
       )
 
       if (slotsToInsert.length > 0) {
         const { error: slotsError } = await supabase.from("availability_slots").insert(slotsToInsert)
-        if (slotsError) {
-          console.error("[v0] Activities: Error inserting slots:", slotsError)
-          throw slotsError
-        }
+        if (slotsError) throw slotsError
       }
 
-      console.log("[v0] Activities: Successfully added activity")
-      // Refresh activities
       await fetchActivities()
     } catch (error) {
-      console.error("[v0] Activities: Error adding activity:", error)
+      console.error("Error adding activity:", error)
     }
   }
 
   const updateActivity = async (id: string, updates: Partial<Activity>) => {
-    if (!supabase) {
-      console.error("[v0] Activities: Cannot update activity - supabase not initialized")
-      return
-    }
+    if (!supabase) return
 
     try {
-      console.log("[v0] Activities: Updating activity:", id)
-      const updateData: any = {}
+      const updateData: Record<string, unknown> = {}
 
       if (updates.title !== undefined) updateData.title = updates.title
       if (updates.tagline !== undefined) updateData.tagline = updates.tagline
@@ -334,28 +293,18 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
       if (updates.isAvailable !== undefined) updateData.is_available = updates.isAvailable
 
       const { error } = await supabase.from("activities").update(updateData).eq("id", id)
+      if (error) throw error
 
-      if (error) {
-        console.error("[v0] Activities: Error updating activity:", error)
-        throw error
-      }
-
-      // Update availability slots if provided
       if (updates.availability) {
-        // Delete existing slots
         await supabase.from("availability_slots").delete().eq("activity_id", id)
 
-        // Insert new slots
         const slotsToInsert = updates.availability.flatMap((av) =>
-          av.slots.map((slot) => {
-            const dayOfWeek = new Date(av.date).getDay()
-            return {
-              activity_id: id,
-              day_of_week: dayOfWeek,
-              time_slot: slot.time,
-              bookings_count: slot.booked || 0,
-            }
-          }),
+          av.slots.map((slot) => ({
+            activity_id: id,
+            day_of_week: new Date(av.date).getDay(),
+            time_slot: slot.time,
+            bookings_count: slot.booked || 0,
+          })),
         )
 
         if (slotsToInsert.length > 0) {
@@ -363,32 +312,21 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      console.log("[v0] Activities: Successfully updated activity")
       await fetchActivities()
     } catch (error) {
-      console.error("[v0] Activities: Error updating activity:", error)
+      console.error("Error updating activity:", error)
     }
   }
 
   const deleteActivity = async (id: string) => {
-    if (!supabase) {
-      console.error("[v0] Activities: Cannot delete activity - supabase not initialized")
-      return
-    }
+    if (!supabase) return
 
     try {
-      console.log("[v0] Activities: Deleting activity:", id)
       const { error } = await supabase.from("activities").delete().eq("id", id)
-
-      if (error) {
-        console.error("[v0] Activities: Error deleting activity:", error)
-        throw error
-      }
-
-      console.log("[v0] Activities: Successfully deleted activity")
+      if (error) throw error
       await fetchActivities()
     } catch (error) {
-      console.error("[v0] Activities: Error deleting activity:", error)
+      console.error("Error deleting activity:", error)
     }
   }
 
@@ -400,57 +338,31 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
     date: string,
     time: string,
   ): Promise<boolean> => {
-    if (!supabase) {
-      console.error("[v0] Activities: Cannot book activity - supabase not initialized")
-      return false
-    }
+    if (!supabase) return false
 
     try {
-      console.log("[v0] Activities: Booking activity:", activityId, "for user:", userName)
-      const bookingId = Math.random().toString(36).substr(2, 9)
-
-      // Insert booking
-      const { error: bookingError } = await supabase.from("bookings").insert({
-        id: bookingId,
-        user_id: userId,
-        user_name: userName,
-        user_email: userEmail,
-        activity_id: activityId,
-        date,
-        time_slot: time,
-        status: "confirmed",
+      // A1 fix: atomic RPC — inserts booking + increments bookings_count in one transaction
+      const { data, error } = await supabase.rpc("book_activity_slot", {
+        p_activity_id: activityId,
+        p_user_id: userId,
+        p_user_name: userName,
+        p_user_email: userEmail,
+        p_date: date,
+        p_time: time,
       })
 
-      if (bookingError) {
-        console.error("[v0] Activities: Error creating booking:", bookingError)
-        throw bookingError
+      if (error) throw error
+
+      if (!data?.ok) {
+        // Slot is full or does not exist
+        return false
       }
 
-      // Update slot booking count
-      const dayOfWeek = new Date(date).getDay()
-      const { data: slot } = await supabase
-        .from("availability_slots")
-        .select("*")
-        .eq("activity_id", activityId)
-        .eq("day_of_week", dayOfWeek)
-        .eq("time_slot", time)
-        .single()
-
-      if (slot) {
-        await supabase
-          .from("availability_slots")
-          .update({ bookings_count: slot.bookings_count + 1 })
-          .eq("id", slot.id)
-      }
-
-      console.log("[v0] Activities: Successfully booked activity")
-      // Refresh data
       await fetchActivities()
       await fetchBookings()
-
       return true
     } catch (error) {
-      console.error("[v0] Activities: Error booking activity:", error)
+      console.error("Error booking activity:", error)
       return false
     }
   }

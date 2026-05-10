@@ -41,9 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const client = createClient()
       setSupabase(client)
-      console.log("[v0] Supabase client created successfully")
     } catch (error) {
-      console.error("[v0] Failed to create Supabase client:", error)
+      console.error("Failed to create Supabase client:", error)
       setIsLoading(false)
     }
   }, [])
@@ -53,28 +52,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       try {
-        console.log("[v0] Getting initial session...")
         const {
           data: { session },
           error,
         } = await supabase.auth.getSession()
 
         if (error) {
-          console.error("[v0] Error getting session:", error)
+          console.error("Error getting session:", error)
           setIsLoading(false)
           return
         }
 
         if (session?.user) {
-          console.log("[v0] Found existing session for user:", session.user.email)
           setSupabaseUser(session.user)
           await fetchUserProfile(session.user.id)
         } else {
-          console.log("[v0] No existing session found")
           setIsLoading(false)
         }
       } catch (error) {
-        console.error("[v0] Failed to get session:", error)
+        console.error("Failed to get session:", error)
         setIsLoading(false)
       }
     }
@@ -84,7 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("[v0] Auth state changed:", _event)
       if (session?.user) {
         setSupabaseUser(session.user)
         fetchUserProfile(session.user.id)
@@ -102,16 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return
 
     try {
-      console.log("[v0] Fetching user profile for:", userId)
       const { data, error } = await supabase.from("users").select("*").eq("id", userId).maybeSingle()
 
       if (error) {
-        console.error("[v0] Error fetching user profile:", error)
+        console.error("Error fetching user profile:", error)
         throw error
       }
 
       if (data) {
-        console.log("[v0] User profile loaded:", data.email)
         setUser({
           id: data.id,
           email: data.email,
@@ -119,38 +112,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           type: data.user_type as UserType,
           companyExperienceLevel: (data.company_experience_level as "education" | "expert" | null) ?? null,
         })
-      } else {
-        console.log("[v0] No user profile found yet, will retry on next auth state change")
       }
     } catch (error) {
-      console.error("[v0] Error fetching user profile:", error)
+      console.error("Error fetching user profile:", error)
     } finally {
       setIsLoading(false)
     }
   }
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    if (!supabase) {
-      console.error("[v0] Supabase client not initialized")
-      return false
-    }
+    if (!supabase) return false
 
     try {
-      console.log("[v0] Attempting login for:", email)
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        console.error("[v0] Login error:", error)
-        throw error
-      }
-
-      console.log("[v0] Login successful")
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
       return true
     } catch (error) {
-      console.error("[v0] Login error:", error)
+      console.error("Login error:", error)
       return false
     }
   }
@@ -162,13 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     type: UserType,
     options?: { companyExperience?: "education" | "expert"; accessCode?: string },
   ): Promise<boolean> => {
-    if (!supabase) {
-      console.error("[v0] Supabase client not initialized")
-      return false
-    }
+    if (!supabase) return false
 
     try {
-      console.log("[v0] Attempting signup for:", email, "as", type)
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -183,14 +157,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       })
 
-      if (error) {
-        console.error("[v0] Signup error:", error)
-        throw error
-      }
+      if (error) throw error
 
       // Persist profile in public.users
       if (data.user) {
-        const profilePayload: any = {
+        const profilePayload: Record<string, unknown> = {
           id: data.user.id,
           email,
           name,
@@ -200,38 +171,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const { error: profileError } = await supabase.from("users").upsert(profilePayload, { onConflict: "id" })
         if (profileError) {
-          console.error("[v0] Profile upsert error:", profileError)
+          console.error("Profile upsert error:", profileError)
         }
 
-        // Create philanthropist record if needed
         if (type === "philanthropist") {
           const { error: philanthropistError } = await supabase.from("philanthropists").upsert(
-            {
-              user_id: data.user.id,
-              full_name: name,
-              email,
-            },
+            { user_id: data.user.id, full_name: name, email },
             { onConflict: "user_id" },
           )
-
           if (philanthropistError) {
-            console.error("[v0] Philanthropist upsert error:", philanthropistError)
+            console.error("Philanthropist upsert error:", philanthropistError)
           }
         }
       }
 
-      console.log("[v0] Signup successful, session:", !!data.session)
       return true
     } catch (error) {
-      console.error("[v0] Signup error:", error)
+      console.error("Signup error:", error)
       return false
     }
   }
 
   const logout = async () => {
     if (!supabase) return
-
-    console.log("[v0] Logging out")
     await supabase.auth.signOut()
     setUser(null)
     setSupabaseUser(null)

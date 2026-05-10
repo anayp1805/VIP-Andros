@@ -1,5 +1,5 @@
 {
-  "name": "my-v0-project",
+  "name": "tokuma",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -58,6 +58,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "vaul": "^1.1.2",
     "zod": "3.25.76"
   },
   "devDependencies": {

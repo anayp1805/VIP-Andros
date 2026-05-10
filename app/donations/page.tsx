@@ -1,6 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+export const dynamic = "force-dynamic"
+
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { createClient } from "@/lib/supabase/client"
@@ -43,7 +45,7 @@ interface ProjectOption {
 export default function DonationsPage() {
   const router = useRouter()
   const { user, isLoading } = useAuth()
-  const supabase = useMemo(() => createClient(), [])
+  const [supabase] = useState(() => (typeof window !== "undefined" ? createClient() : null))
   const [showAuthModal, setShowAuthModal] = useState(false)
 
   const [philanthropistId, setPhilanthropistId] = useState<string | null>(null)
@@ -68,7 +70,7 @@ export default function DonationsPage() {
 
   useEffect(() => {
     const bootstrap = async () => {
-      if (!user || user.type !== "philanthropist") return
+      if (!supabase || !user || user.type !== "philanthropist") return
 
       // Load philanthropist profile (needed to tie donations)
       const { data: philanthropist, error: philErr } = await supabase
@@ -144,7 +146,7 @@ export default function DonationsPage() {
   }, {})
 
   const handleSubmit = async () => {
-    if (!philanthropistId) return
+    if (!supabase || !philanthropistId) return
 
     const numericAmount = Number(amount)
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
@@ -183,7 +185,7 @@ export default function DonationsPage() {
       setDonations((prev) => [
         {
           ...(data as DonationRow),
-          project: projectLookup,
+          project: projectLookup as DonationRow["project"],
         },
         ...prev,
       ])

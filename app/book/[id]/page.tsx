@@ -57,10 +57,7 @@ export default function BookActivityPage() {
 
     setIsBooking(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    const success = bookActivity(activity.id, user.id, user.name, user.email, selectedDate, selectedTime)
+    const success = await bookActivity(activity.id, user.id, user.name, user.email, selectedDate, selectedTime)
 
     if (success) {
       setBookingSuccess(true)
