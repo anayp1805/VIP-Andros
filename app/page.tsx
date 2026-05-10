@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Navbar } from "@/components/navbar"
+import { AuthModal } from "@/components/auth-modal"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +34,7 @@ const highlights = [
 
 export default function WelcomePage() {
   const { user } = useAuth()
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [ctaHref, setCtaHref] = useState("/activities")
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function WelcomePage() {
 
   return (
     <div className="min-h-screen bg-sand">
-      <Navbar onAuthClick={() => {}} />
+      <Navbar onAuthClick={() => setShowAuthModal(true)} />
 
       <section className="bg-gradient-to-br from-ocean-blue to-ocean-dark text-white py-20">
         <div className="container mx-auto px-4 grid gap-10 lg:grid-cols-2 items-center">
@@ -176,6 +178,8 @@ export default function WelcomePage() {
           </CardContent>
         </Card>
       </section>
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </div>
   )
 }

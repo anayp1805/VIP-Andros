@@ -4,6 +4,7 @@ import { Inter, Poppins } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth-context"
 import { ActivitiesProvider } from "@/lib/activities-context"
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 const poppins = Poppins({
@@ -29,6 +30,7 @@ export default function RootLayout({
         <AuthProvider>
           <ActivitiesProvider>{children}</ActivitiesProvider>
         </AuthProvider>
+        <Toaster richColors closeButton />
       </body>
     </html>
   )

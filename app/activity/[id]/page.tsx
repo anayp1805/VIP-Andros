@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { useAuth } from "@/lib/auth-context"
 import { useActivities } from "@/lib/activities-context"
 import { Navbar } from "@/components/navbar"
@@ -51,7 +52,9 @@ export default function ActivityDetailPage() {
     }
 
     if (user.type === "company") {
-      alert("Companies cannot book activities. Please sign in as a user.")
+      toast.info("Companies cannot book activities.", {
+        description: "Please sign in as a user.",
+      })
       return
     }
 

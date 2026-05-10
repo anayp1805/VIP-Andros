@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { AuthModal } from "@/components/auth-modal"
+import { RequireRole } from "@/components/require-role"
 import { useAuth } from "@/lib/auth-context"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,18 +29,11 @@ const demoEvents = [
 ]
 
 export default function PhilanthropyPage() {
-  const router = useRouter()
   const { user, isLoading } = useAuth()
   const isAuthorized = useMemo(() => user && user.type === "philanthropist", [user])
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [donationTotal, setDonationTotal] = useState<number | null>(null)
   const [profileId, setProfileId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!isLoading && !isAuthorized) {
-      router.replace("/")
-    }
-  }, [isAuthorized, isLoading, router])
 
   useEffect(() => {
     const load = async () => {
@@ -79,13 +72,11 @@ export default function PhilanthropyPage() {
     load()
   }, [user, isAuthorized])
 
-  if (isLoading || !isAuthorized) {
-    return null
-  }
-
   return (
-    <div className="min-h-screen bg-sand">
-      <Navbar onAuthClick={() => setShowAuthModal(true)} />
+    <RequireRole roles={["philanthropist"]} fallback="/">
+      {isLoading || !isAuthorized ? null : (
+        <div className="min-h-screen bg-sand">
+          <Navbar onAuthClick={() => setShowAuthModal(true)} />
 
       <div className="container mx-auto px-4 py-10 space-y-10">
         <header className="space-y-3">
@@ -201,7 +192,9 @@ export default function PhilanthropyPage() {
         </Card>
       </div>
 
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-    </div>
+          {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        </div>
+      )}
+    </RequireRole>
   )
 }

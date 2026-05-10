@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { useAuth } from "@/lib/auth-context"
 import { useActivities } from "@/lib/activities-context"
 import { Navbar } from "@/components/navbar"
@@ -60,7 +61,7 @@ export default function BookActivityPage() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    const success = bookActivity(activity.id, user.id, user.name, user.email, selectedDate, selectedTime)
+    const success = await bookActivity(activity.id, user.id, user.name, user.email, selectedDate, selectedTime)
 
     if (success) {
       setBookingSuccess(true)
@@ -68,7 +69,9 @@ export default function BookActivityPage() {
         router.push("/my-bookings")
       }, 2000)
     } else {
-      alert("Booking failed. Please try again.")
+      toast.error("Booking failed.", {
+        description: "Please try again.",
+      })
     }
 
     setIsBooking(false)

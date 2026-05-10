@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useActivities } from "@/lib/activities-context"
 import { Navbar } from "@/components/navbar"
 import { AuthModal } from "@/components/auth-modal"
+import { RequireRole } from "@/components/require-role"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -20,14 +21,6 @@ export default function DashboardPage() {
   const [companyActivities, setCompanyActivities] = useState<any[]>([])
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/")
-    }
-
-    if (user && user.type !== "company" && user.type !== "philanthropist") {
-      router.push("/")
-    }
-
     if (user && (user.type === "company" || user.type === "philanthropist")) {
       setCompanyActivities(getCompanyActivities(user.id))
     }
@@ -46,24 +39,18 @@ export default function DashboardPage() {
     companyActivities.some((activity) => activity.id === booking.activityId),
   )
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-sand">
-        <Navbar onAuthClick={() => setShowAuthModal(true)} />
-        <div className="container mx-auto px-4 py-12 text-center">
-          <p>Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user || (user.type !== "company" && user.type !== "philanthropist")) {
-    return null
-  }
-
   return (
-    <div className="min-h-screen bg-sand">
-      <Navbar onAuthClick={() => setShowAuthModal(true)} />
+    <RequireRole roles={["company", "philanthropist"]} fallback="/">
+      {isLoading ? (
+        <div className="min-h-screen bg-sand">
+          <Navbar onAuthClick={() => setShowAuthModal(true)} />
+          <div className="container mx-auto px-4 py-12 text-center">
+            <p>Loading...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="min-h-screen bg-sand">
+          <Navbar onAuthClick={() => setShowAuthModal(true)} />
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
@@ -288,7 +275,9 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-    </div>
+          {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        </div>
+      )}
+    </RequireRole>
   )
 }

@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { useAuth } from "@/lib/auth-context"
 import { createClient } from "@/lib/supabase/client"
 import { Navbar } from "@/components/navbar"
 import { AuthModal } from "@/components/auth-modal"
+import { RequireRole } from "@/components/require-role"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,10 +39,11 @@ interface ProjectOption {
   id: string
   title: string
   category: string
+  current_amount: number | null
+  target_amount: number | null
 }
 
 export default function DonationsPage() {
-  const router = useRouter()
   const { user, isLoading } = useAuth()
   const supabase = useMemo(() => createClient(), [])
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -57,14 +59,6 @@ export default function DonationsPage() {
   const [cause, setCause] = useState("General fund")
   const [projectId, setProjectId] = useState<string | undefined>()
   const [message, setMessage] = useState("")
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user || user.type !== "philanthropist") {
-        router.replace("/")
-      }
-    }
-  }, [user, isLoading, router])
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -148,7 +142,7 @@ export default function DonationsPage() {
 
     const numericAmount = Number(amount)
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      alert("Please enter a valid amount greater than 0.")
+      toast.error("Please enter a valid amount greater than 0.")
       return
     }
 
@@ -173,7 +167,9 @@ export default function DonationsPage() {
 
     if (error) {
       console.error("[donations] insert error", error)
-      alert(`Could not process donation right now. ${error.message || ""}`)
+      toast.error("Could not process donation right now.", {
+        description: error.message || "Please try again.",
+      })
       setSaving(false)
       return
     }
@@ -192,27 +188,24 @@ export default function DonationsPage() {
       setCause("General fund")
       setProjectId(undefined)
       setMessage("")
+      toast.success("Donation processed.", {
+        description: `Your ${currency} ${numericAmount.toFixed(2)} donation was saved.`,
+      })
     }
 
     setSaving(false)
   }
 
-  if (isLoading || loading) {
-    return (
-      <div className="min-h-screen bg-sand">
-        <Navbar onAuthClick={() => setShowAuthModal(true)} />
-        <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading donations...</div>
-      </div>
-    )
-  }
-
-  if (!user || user.type !== "philanthropist") {
-    return null
-  }
-
   return (
-    <div className="min-h-screen bg-sand">
-      <Navbar onAuthClick={() => setShowAuthModal(true)} />
+    <RequireRole roles={["philanthropist"]} fallback="/">
+      {isLoading || loading ? (
+        <div className="min-h-screen bg-sand">
+          <Navbar onAuthClick={() => setShowAuthModal(true)} />
+          <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">Loading donations...</div>
+        </div>
+      ) : (
+        <div className="min-h-screen bg-sand">
+          <Navbar onAuthClick={() => setShowAuthModal(true)} />
 
       <div className="container mx-auto px-4 py-10 space-y-8">
         <header className="space-y-2">
@@ -478,7 +471,9 @@ export default function DonationsPage() {
         </Tabs>
       </div>
 
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-    </div>
+          {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        </div>
+      )}
+    </RequireRole>
   )
 }

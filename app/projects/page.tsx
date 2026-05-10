@@ -1,8 +1,10 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 import { Navbar } from "@/components/navbar"
 import { AuthModal } from "@/components/auth-modal"
+import { RequireRole } from "@/components/require-role"
 import { useAuth } from "@/lib/auth-context"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -107,7 +109,9 @@ export default function ProjectsPage() {
           .maybeSingle()
         if (error) {
           console.error("[projects] philanthropist insert error", error)
-          alert("Could not apply right now.")
+          toast.error("Could not apply right now.", {
+            description: error.message,
+          })
           return
         }
         philanthropistId = data?.id
@@ -122,13 +126,20 @@ export default function ProjectsPage() {
 
         if (error) {
           console.error("[projects] volunteer error", error)
+          toast.error("Could not apply right now.", {
+            description: error.message,
+          })
         } else {
-          alert("Applied to project! (saved in Supabase)")
+          toast.success("Applied to project.", {
+            description: "Your application was saved in Supabase.",
+          })
         }
       }
     } else {
       // Student flow (user table) not represented in schema FK; keep as placeholder
-      alert("Application noted locally. Schema expects philanthropists as volunteers.");
+      toast.info("Application noted locally.", {
+        description: "Schema expects philanthropists as volunteers.",
+      })
     }
   }
 
@@ -188,56 +199,66 @@ export default function ProjectsPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex items-center justify-between">
-              <div>
-                <CardTitle>Post a Project</CardTitle>
-                <CardDescription>Organizations and philanthropists can propose new initiatives.</CardDescription>
-              </div>
-              <Rocket className="h-5 w-5 text-primary" />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {!isOrg && (
+          {isOrg ? (
+            <RequireRole roles={["company", "philanthropist"]} fallback="/projects">
+              <Card>
+                <CardHeader className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Post a Project</CardTitle>
+                    <CardDescription>Organizations and philanthropists can propose new initiatives.</CardDescription>
+                  </div>
+                  <Rocket className="h-5 w-5 text-primary" />
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Project title"
+                      value={newProject.title}
+                      onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Organization name"
+                      value={newProject.org}
+                      onChange={(e) => setNewProject({ ...newProject, org: e.target.value })}
+                    />
+                    <Textarea
+                      placeholder="Describe the project, partners, and expected impact"
+                      value={newProject.summary}
+                      onChange={(e) => setNewProject({ ...newProject, summary: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Theme (e.g., circular economy, education tech)"
+                      value={newProject.theme}
+                      onChange={(e) => setNewProject({ ...newProject, theme: e.target.value })}
+                    />
+                  </div>
+                  <Button className="w-full" onClick={createProject}>
+                    Submit to Supabase
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Projects here are distinct from the marketplace. Funding flows from philanthropists, and students apply
+                    to participate.
+                  </p>
+                </CardContent>
+              </Card>
+            </RequireRole>
+          ) : (
+            <Card>
+              <CardHeader className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Post a Project</CardTitle>
+                  <CardDescription>Organizations and philanthropists can propose new initiatives.</CardDescription>
+                </div>
+                <Rocket className="h-5 w-5 text-primary" />
+              </CardHeader>
+              <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Sign in as a company or philanthropist to post projects. This keeps governance aligned with Tokuma&apos;s
                   nonprofit mission.
                 </p>
-              )}
-              <div className="space-y-2">
-                <Input
-                  placeholder="Project title"
-                  value={newProject.title}
-                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-                  disabled={!isOrg}
-                />
-                <Input
-                  placeholder="Organization name"
-                  value={newProject.org}
-                  onChange={(e) => setNewProject({ ...newProject, org: e.target.value })}
-                  disabled={!isOrg}
-                />
-                <Textarea
-                  placeholder="Describe the project, partners, and expected impact"
-                  value={newProject.summary}
-                  onChange={(e) => setNewProject({ ...newProject, summary: e.target.value })}
-                  disabled={!isOrg}
-                />
-                <Input
-                  placeholder="Theme (e.g., circular economy, education tech)"
-                  value={newProject.theme}
-                  onChange={(e) => setNewProject({ ...newProject, theme: e.target.value })}
-                  disabled={!isOrg}
-                />
-              </div>
-              <Button className="w-full" onClick={createProject} disabled={!isOrg}>
-                Submit to Supabase
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Projects here are distinct from the marketplace. Funding flows from philanthropists, and students apply
-                to participate.
-              </p>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <Card>
