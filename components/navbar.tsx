@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Mountain, LogOut, ChevronDown, User as UserIcon } from "lucide-react"
 import Link from "next/link"
 
@@ -66,8 +66,15 @@ export function Navbar({ onAuthClick }: NavbarProps) {
                 <DropdownMenuTrigger asChild>
                   <button className="rounded-full border border-border hover:border-primary transition">
                     <Avatar className="h-10 w-10">
+                      {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={`${user.name}'s avatar`} />}
                       <AvatarFallback>
-                        <UserIcon className="h-5 w-5 text-muted-foreground" />
+                        {user.name ? (
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {user.name.slice(0, 2).toUpperCase()}
+                          </span>
+                        ) : (
+                          <UserIcon className="h-5 w-5 text-muted-foreground" />
+                        )}
                       </AvatarFallback>
                     </Avatar>
                   </button>

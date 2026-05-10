@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 import { Navbar } from "@/components/navbar"
+import { ProfileForm } from "@/components/profile-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -53,7 +54,9 @@ export default function ProfilePage() {
         </header>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
+          <ProfileForm />
+
+          <Card>
             <CardHeader>
               <CardTitle>Account overview</CardTitle>
               <CardDescription>Your basics for sign-in and access.</CardDescription>
@@ -79,11 +82,15 @@ export default function ProfilePage() {
                   <span className="text-muted-foreground">Role</span>
                   <span className="font-medium">{roleLabel}</span>
                 </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground">Bio</span>
+                  <p className="font-medium">{user.bio || "No bio added yet."}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="lg:col-start-3">
             <CardHeader>
               <CardTitle>Quick actions</CardTitle>
             </CardHeader>

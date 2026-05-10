@@ -12,11 +12,14 @@ export interface User {
   name: string
   type: UserType
   companyExperienceLevel?: "education" | "expert" | null
+  bio?: string | null
+  avatarUrl?: string | null
 }
 
 interface AuthContextType {
   user: User | null
   supabaseUser: SupabaseUser | null
+  refreshUserProfile: () => Promise<void>
   login: (email: string, password: string) => Promise<boolean>
   signup: (
     email: string,
@@ -118,6 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: data.name,
           type: data.user_type as UserType,
           companyExperienceLevel: (data.company_experience_level as "education" | "expert" | null) ?? null,
+          bio: (data.bio as string | null) ?? null,
+          avatarUrl: (data.avatar_url as string | null) ?? null,
         })
       } else {
         console.log("[v0] No user profile found yet, will retry on next auth state change")
@@ -127,6 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const refreshUserProfile = async () => {
+    if (!supabaseUser) return
+    await fetchUserProfile(supabaseUser.id)
   }
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -190,7 +200,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Persist profile in public.users
       if (data.user) {
-        const profilePayload: any = {
+        const profilePayload: {
+          id: string
+          email: string
+          name: string
+          user_type: UserType
+          company_experience_level: "education" | "expert" | null
+        } = {
           id: data.user.id,
           email,
           name,
@@ -238,7 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, supabaseUser, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, supabaseUser, refreshUserProfile, login, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )
