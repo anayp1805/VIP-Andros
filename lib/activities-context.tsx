@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
+import { resolveImageUrls } from "@/lib/storage"
 
 export interface Activity {
   id: string
@@ -97,9 +98,11 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
       if (error) throw error
 
       if (data) {
-        const transformedActivities: Activity[] = data.map((activity) => {
-          const images =
+        const transformedActivities: Activity[] = await Promise.all(data.map(async (activity) => {
+          const rawImages =
             activity.images && activity.images.length > 0 ? activity.images : ["/diverse-group-activity.png"]
+          // Resolve storage paths to signed URLs; plain http/local URLs pass through unchanged
+          const images = await resolveImageUrls(supabase, rawImages)
           return {
             id: activity.id,
             companyId: activity.company_id,
@@ -117,7 +120,7 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
             isAvailable: activity.is_available,
             availability: [],
           }
-        })
+        }))
 
         const activitiesWithSlots = await Promise.all(
           transformedActivities.map(async (activity) => {

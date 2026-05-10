@@ -3,6 +3,8 @@
 import type React from "react"
 import { useState } from "react"
 import type { Activity } from "@/lib/activities-context"
+import { createClient } from "@/lib/supabase/client"
+import { uploadActivityImage } from "@/lib/storage"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,6 +20,11 @@ interface ActivityFormProps {
 }
 
 export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps) {
+  const [supabase] = useState(() => (typeof window !== "undefined" ? createClient() : null))
+  // Maps blob: preview URLs → the original File, so we can upload on submit
+  const [fileMap, setFileMap] = useState<Map<string, File>>(new Map())
+  const [uploading, setUploading] = useState(false)
+
   const [title, setTitle] = useState(activity?.title || "")
   const [tagline, setTagline] = useState(activity?.tagline || "")
   const [experienceDescription, setExperienceDescription] = useState(activity?.experienceDescription || "")
@@ -71,21 +78,28 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
   }
 
   const removeImage = (index: number) => {
+    const url = images[index]
     setImages(images.filter((_, i) => i !== index))
+    if (url?.startsWith("blob:")) {
+      URL.revokeObjectURL(url)
+      setFileMap((prev) => {
+        const next = new Map(prev)
+        next.delete(url)
+        return next
+      })
+    }
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
-      Array.from(files).forEach((file) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64String = reader.result as string
-          setImages((prev) => [...prev, base64String])
-        }
-        reader.readAsDataURL(file)
-      })
-    }
+    if (!files) return
+    Array.from(files).forEach((file) => {
+      const previewUrl = URL.createObjectURL(file)
+      setImages((prev) => [...prev, previewUrl])
+      setFileMap((prev) => new Map(prev).set(previewUrl, file))
+    })
+    // Reset input so the same file can be re-selected if removed
+    e.target.value = ""
   }
 
   const addAvailabilityDate = () => {
@@ -126,25 +140,42 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
     setAvailability(updated)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setUploading(true)
 
-    const activityData = {
-      title,
-      tagline,
-      experienceDescription,
-      price: Number.parseFloat(price),
-      pricePer,
-      duration,
-      capacity: Number.parseInt(capacity) || 10,
-      included,
-      whatToBring,
-      images,
-      isAvailable,
-      availability: availability.filter((av) => av.date && av.slots.some((s) => s.time)),
+    try {
+      // Upload any staged File objects; replace blob: URLs with storage paths
+      const resolvedImages = await Promise.all(
+        images.map(async (img) => {
+          if (!img.startsWith("blob:")) return img
+          const file = fileMap.get(img)
+          if (!file || !supabase) return img
+          const path = await uploadActivityImage(supabase, file)
+          URL.revokeObjectURL(img)
+          return path
+        }),
+      )
+
+      onSubmit({
+        title,
+        tagline,
+        experienceDescription,
+        price: Number.parseFloat(price),
+        pricePer,
+        duration,
+        capacity: Number.parseInt(capacity) || 10,
+        included,
+        whatToBring,
+        images: resolvedImages,
+        isAvailable,
+        availability: availability.filter((av) => av.date && av.slots.some((s) => s.time)),
+      })
+    } catch (err) {
+      console.error("Image upload failed:", err)
+    } finally {
+      setUploading(false)
     }
-
-    onSubmit(activityData)
   }
 
   return (
@@ -536,8 +567,8 @@ export function ActivityForm({ activity, onSubmit, onCancel }: ActivityFormProps
 
       {/* Actions */}
       <div className="flex gap-4 justify-center pb-8">
-        <Button type="submit" size="lg" className="bg-ocean-blue hover:bg-ocean-dark min-w-[200px]">
-          {activity ? "Update Activity" : "Submit"}
+        <Button type="submit" size="lg" className="bg-ocean-blue hover:bg-ocean-dark min-w-[200px]" disabled={uploading}>
+          {uploading ? "Uploading images…" : activity ? "Update Activity" : "Submit"}
         </Button>
         <Button type="button" variant="outline" size="lg" onClick={onCancel}>
           Cancel
